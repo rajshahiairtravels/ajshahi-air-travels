@@ -1,0 +1,1551 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rajshahi AIR Travels - শপ ম্যানেজমেন্ট সিস্টেম</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Hind Siliguri', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Login Overlay / Section -->
+    <div id="loginOverlay" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 space-y-6">
+            <div class="text-center space-y-2">
+                <div class="inline-block bg-blue-900 text-white p-3 rounded-xl text-2xl shadow-md">
+                    <i class="fa-solid fa-plane-departure"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-800">Rajshahi AIR Travels</h2>
+                <p class="text-xs text-slate-500">শপ ম্যানেজমেন্ট সিস্টেমে লগইন করুন</p>
+            </div>
+
+            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">ইমেইল এড্রেস</label>
+                    <input type="email" id="loginEmail" required class="w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="example@gmail.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">পাসওয়ার্ড</label>
+                    <input type="password" id="loginPassword" required class="w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="পাসওয়ার্ড লিখুন">
+                </div>
+                <div class="flex justify-between items-center text-xs">
+                    <button type="button" onclick="openRecoveryModal()" class="text-blue-600 hover:underline font-medium">পাসওয়ার্ড ভুলে গেছেন? / রিকভারি</button>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition shadow-md">
+                    লগইন করুন
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Password Recovery Modal -->
+    <div id="recoveryModal" class="fixed inset-0 bg-slate-900 bg-opacity-60 z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="text-lg font-bold text-blue-900 flex items-center space-x-2">
+                    <i class="fa-solid fa-key"></i>
+                    <span>পাসওয়ার্ড রিকভারি</span>
+                </h3>
+                <button onclick="closeRecoveryModal()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">রিকভারি কোড বা নম্বর দিন</label>
+                <input type="text" id="recoveryCodeInput" class="w-full border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="কোড লিখুন...">
+            </div>
+            <div id="recoveryResultBox" class="hidden bg-slate-50 p-4 rounded-lg border space-y-2 text-sm">
+                <p><strong>ইমেইল:</strong> <span id="recEmail" class="text-blue-700"></span></p>
+                <p><strong>পাসওয়ার্ড:</strong> <span id="recPass" class="text-red-600 font-bold"></span></p>
+                <button onclick="triggerRocketMessage()" class="w-full mt-2 bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg text-xs font-medium transition">
+                    রিকভারি অপশন (Rocket Check)
+                </button>
+            </div>
+            <div id="rocketMsgBox" class="hidden text-xs font-bold text-purple-700 bg-purple-50 p-3 rounded-lg text-center">
+                Type abubokor rocket no.
+            </div>
+            <div class="flex space-x-3 pt-2">
+                <button onclick="verifyRecoveryCode()" class="flex-grow bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg transition shadow-sm">
+                    যাচাই করুন
+                </button>
+                <button onclick="closeRecoveryModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2.5 rounded-lg font-medium transition">
+                    বন্ধ করুন
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Container (Hidden until login) -->
+    <div id="mainAppWrapper" class="hidden flex-col min-h-screen">
+        <!-- Top Header -->
+        <header class="bg-blue-900 text-white shadow-md sticky top-0 z-40">
+            <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-white text-blue-900 p-2 rounded-lg font-bold text-xl shadow">
+                        <i class="fa-solid fa-plane-departure"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold tracking-wide">Rajshahi AIR Travels</h1>
+                        <p class="text-xs text-blue-200">শপ ম্যানেজমেন্ট সিস্টেম</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4 mt-2 sm:mt-0">
+                    <div class="bg-blue-800 px-3 py-1.5 rounded-lg text-sm flex items-center space-x-2 border border-blue-700">
+                        <i class="fa-solid fa-user-tie text-blue-300"></i>
+                        <span>কর্মী:</span>
+                        <select id="globalStaff" class="bg-blue-900 text-white font-medium focus:outline-none cursor-pointer">
+                            <option value="Abu bokor">Abu bokor</option>
+                            <option value="Bappi">Bappi</option>
+                        </select>
+                    </div>
+                    <div id="currentDateDisplay" class="bg-blue-800 px-3 py-1.5 rounded-lg text-sm font-medium border border-blue-700 hidden sm:block">
+                        <!-- Date inserted by JS -->
+                    </div>
+                    <button onclick="handleLogout()" class="bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg text-sm font-medium transition" title="লগআউট">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="bg-white shadow-sm border-b">
+            <div class="max-w-7xl mx-auto px-4 flex overflow-x-auto space-x-2 sm:space-x-4 py-2">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="tab-btn px-4 py-2 rounded-lg font-medium text-sm flex items-center space-x-2 bg-blue-600 text-white transition whitespace-nowrap shadow-sm">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>ড্যাশবোর্ড</span>
+                </button>
+                <button onclick="switchTab('photocopy')" id="nav-photocopy" class="tab-btn px-4 py-2 rounded-lg font-medium text-sm flex items-center space-x-2 text-slate-600 hover:bg-slate-100 transition whitespace-nowrap">
+                    <i class="fa-solid fa-copy"></i>
+                    <span>ফটো কপি</span>
+                </button>
+                <button onclick="switchTab('print')" id="nav-print" class="tab-btn px-4 py-2 rounded-lg font-medium text-sm flex items-center space-x-2 text-slate-600 hover:bg-slate-100 transition whitespace-nowrap">
+                    <i class="fa-solid fa-print"></i>
+                    <span>প্রিন্ট</span>
+                </button>
+                <button onclick="switchTab('products')" id="nav-products" class="tab-btn px-4 py-2 rounded-lg font-medium text-sm flex items-center space-x-2 text-slate-600 hover:bg-slate-100 transition whitespace-nowrap">
+                    <i class="fa-solid fa-box-archive"></i>
+                    <span>অন্যান্য প্রোডাক্ট</span>
+                </button>
+                <button onclick="switchTab('banking')" id="nav-banking" class="tab-btn px-4 py-2 rounded-lg font-medium text-sm flex items-center space-x-2 text-slate-600 hover:bg-slate-100 transition whitespace-nowrap">
+                    <i class="fa-solid fa-wallet"></i>
+                    <span>মোবাইল ব্যাংকিং</span>
+                </button>
+                <button onclick="switchTab('expense')" id="nav-expense" class="tab-btn px-4 py-2 rounded-lg font-medium text-sm flex items-center space-x-2 text-slate-600 hover:bg-slate-100 transition whitespace-nowrap">
+                    <i class="fa-solid fa-money-bill-transfer"></i>
+                    <span>দোকানের খরচ</span>
+                </button>
+                <button onclick="switchTab('dueCollection')" id="nav-dueCollection" class="tab-btn px-4 py-2 rounded-lg font-medium text-sm flex items-center space-x-2 text-slate-600 hover:bg-slate-100 transition whitespace-nowrap">
+                    <i class="fa-solid fa-hand-holding-dollar"></i>
+                    <span>বাকি টাকা গ্রহণ</span>
+                </button>
+                <button onclick="switchTab('reports')" id="nav-reports" class="tab-btn px-4 py-2 rounded-lg font-medium text-sm flex items-center space-x-2 text-slate-600 hover:bg-slate-100 transition whitespace-nowrap">
+                    <i class="fa-solid fa-file-excel"></i>
+                    <span>বিক্রি ও খরচ রিপোর্ট</span>
+                </button>
+                <button onclick="switchTab('backup')" id="nav-backup" class="tab-btn px-4 py-2 rounded-lg font-medium text-sm flex items-center space-x-2 text-slate-600 hover:bg-slate-100 transition whitespace-nowrap">
+                    <i class="fa-solid fa-cloud-arrow-down"></i>
+                    <span>ব্যাকআপ ও রিস্টোর</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content Container -->
+        <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-6">
+
+            <!-- 1. DASHBOARD TAB -->
+            <section id="tab-dashboard" class="tab-content space-y-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- New Bortoman Cash Card -->
+                    <div class="bg-gradient-to-r from-teal-500 to-emerald-600 text-white p-5 rounded-xl shadow-md flex items-center space-x-4">
+                        <div class="bg-white/20 text-white p-4 rounded-xl text-2xl">
+                            <i class="fa-solid fa-wallet"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-teal-100 font-medium">বর্তমান ক্যাশ (Cash in Hand)</p>
+                            <h3 id="dashBortomanCash" class="text-2xl font-bold">৳ ০</h3>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex items-center space-x-4">
+                        <div class="bg-blue-100 text-blue-600 p-4 rounded-xl text-2xl">
+                            <i class="fa-solid fa-bangladeshi-taka-sign"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-slate-500 font-medium">আজকের মোট ক্যাশ বিক্রি</p>
+                            <h3 id="dashTodaySales" class="text-2xl font-bold text-slate-800">৳ ০</h3>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex items-center space-x-4">
+                        <div class="bg-amber-100 text-amber-600 p-4 rounded-xl text-2xl">
+                            <i class="fa-solid fa-clock"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-slate-500 font-medium">আজকের নতুন বকেয়া</p>
+                            <h3 id="dashTodayDue" class="text-2xl font-bold text-slate-800">৳ ০</h3>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex items-center space-x-4">
+                        <div class="bg-red-100 text-red-600 p-4 rounded-xl text-2xl">
+                            <i class="fa-solid fa-receipt"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-slate-500 font-medium">আজকের মোট খরচ</p>
+                            <h3 id="dashTodayExpense" class="text-2xl font-bold text-slate-800">৳ ০</h3>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex items-center space-x-4">
+                        <div class="bg-emerald-100 text-emerald-600 p-4 rounded-xl text-2xl">
+                            <i class="fa-solid fa-chart-line"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-slate-500 font-medium">এই মাসের মোট বিক্রি</p>
+                            <h3 id="dashMonthSales" class="text-2xl font-bold text-slate-800">৳ ০</h3>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex items-center space-x-4">
+                        <div class="bg-orange-100 text-orange-600 p-4 rounded-xl text-2xl">
+                            <i class="fa-solid fa-calendar-days"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-slate-500 font-medium">এই মাসের মোট বকেয়া</p>
+                            <h3 id="dashMonthDue" class="text-2xl font-bold text-slate-800">৳ ০</h3>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex items-center space-x-4">
+                        <div class="bg-purple-100 text-purple-600 p-4 rounded-xl text-2xl">
+                            <i class="fa-solid fa-book-bookmark"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-slate-500 font-medium">সর্বমোট বকেয়া (Outstanding Due)</p>
+                            <h3 id="dashTotalDue" class="text-2xl font-bold text-slate-800">৳ ০</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activities -->
+                <div class="bg-white rounded-xl shadow-sm border p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold text-slate-800 flex items-center space-x-2">
+                            <i class="fa-solid fa-clock-rotate-left text-blue-600"></i>
+                            <span>সাম্প্রতিক লেনদেনসমূহ (আজ)</span>
+                        </h3>
+                        <button onclick="switchTab('reports')" class="text-sm text-blue-600 hover:underline font-medium">সব দেখুন</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-600 text-sm">
+                                    <th class="p-3 rounded-l-lg">সময়</th>
+                                    <th class="p-3">ক্যাটাগরি</th>
+                                    <th class="p-3">বিবরণ</th>
+                                    <th class="p-3">গ্রাহক</th>
+                                    <th class="p-3">স্ট্যাটাস</th>
+                                    <th class="p-3 text-right rounded-r-lg">টাকা</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentTransactionsTable" class="text-sm divide-y divide-slate-100">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. PHOTO COPY TAB -->
+            <section id="tab-photocopy" class="tab-content hidden">
+                <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-sm border p-6 sm:p-8">
+                    <h2 class="text-xl font-bold text-slate-800 mb-6 flex items-center space-x-2 border-b pb-3">
+                        <i class="fa-solid fa-copy text-blue-600"></i>
+                        <span>ফটো কপি এন্ট্রি</span>
+                    </h2>
+                    <form id="formPhotocopy" onsubmit="handleTransaction(event, 'photocopy')" class="space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">কয় পেজ ফটো কপি?</label>
+                                <input type="number" id="pcPages" min="0" required class="w-full border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="উদাহরণ: ১০">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">নষ্ট পেজ (যদি থাকে)</label>
+                                <input type="number" id="pcDamaged" min="0" value="0" class="w-full border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="উদাহরণ: ১">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">মোট বিল (৳)</label>
+                                <input type="number" id="pcAmount" min="0" required class="w-full border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="উদাহরণ: ৫০">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">পেমেন্ট টাইপ</label>
+                                <select id="pcPaymentType" class="w-full border rounded-lg px-4 py-2.5 bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                    <option value="Paid">নগদ পরিশোধ (Paid)</option>
+                                    <option value="Due">বাকি (Due)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Customer Info -->
+                        <div class="border-t pt-4 mt-4 space-y-4 bg-slate-50 p-4 rounded-xl">
+                            <h4 class="text-sm font-semibold text-slate-700">গ্রাহকের তথ্য (বাকি রাখলে নাম ও ফোন আবশ্যক)</h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-600 mb-1">নাম</label>
+                                    <input type="text" id="pcCustName" class="w-full border rounded-lg px-3 py-2 text-sm bg-white" placeholder="গ্রাহকের নাম">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-600 mb-1">ফোন নম্বর</label>
+                                    <input type="text" id="pcCustPhone" class="w-full border rounded-lg px-3 py-2 text-sm bg-white" placeholder="মোবাইল নম্বর">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">ঠিকানা</label>
+                                <input type="text" id="pcCustAddress" class="w-full border rounded-lg px-3 py-2 text-sm bg-white" placeholder="ঠিকানা">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition shadow-sm">
+                            সাবমিট করুন
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- 3. PRINT TAB -->
+            <section id="tab-print" class="tab-content hidden">
+                <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-sm border p-6 sm:p-8">
+                    <h2 class="text-xl font-bold text-slate-800 mb-6 flex items-center space-x-2 border-b pb-3">
+                        <i class="fa-solid fa-print text-blue-600"></i>
+                        <span>প্রিন্ট এন্ট্রি</span>
+                    </h2>
+                    <form id="formPrint" onsubmit="handleTransaction(event, 'print')" class="space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">কয় পেজ প্রিন্ট?</label>
+                                <input type="number" id="printPages" min="0" required class="w-full border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="উদাহরণ: ৫">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">প্রিন্টের ধরণ</label>
+                                <select id="printType" class="w-full border rounded-lg px-4 py-2.5 bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                    <option value="scan and print">Scan and Print</option>
+                                    <option value="typing and print">Typing and Print</option>
+                                    <option value="from fillup and print">From Fillup and Print</option>
+                                    <option value="file receved and print">File Receved and Print</option>
+                                    <option value="photo print">Photo Print</option>
+                                    <option value="others">Others</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">নষ্ট পেজ</label>
+                                <input type="number" id="printDamaged" min="0" value="0" class="w-full border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="০">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">মোট বিল (৳)</label>
+                                <input type="number" id="printAmount" min="0" required class="w-full border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="১০০">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">পেমেন্ট</label>
+                                <select id="printPaymentType" class="w-full border rounded-lg px-4 py-2.5 bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                    <option value="Paid">নগদ (Paid)</option>
+                                    <option value="Due">বাকি (Due)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Customer Info -->
+                        <div class="border-t pt-4 mt-4 space-y-4 bg-slate-50 p-4 rounded-xl">
+                            <h4 class="text-sm font-semibold text-slate-700">গ্রাহকের তথ্য</h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-600 mb-1">নাম</label>
+                                    <input type="text" id="printCustName" class="w-full border rounded-lg px-3 py-2 text-sm bg-white" placeholder="গ্রাহকের নাম">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-600 mb-1">ফোন নম্বর</label>
+                                    <input type="text" id="printCustPhone" class="w-full border rounded-lg px-3 py-2 text-sm bg-white" placeholder="মোবাইল নম্বর">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">ঠিকানা</label>
+                                <input type="text" id="printCustAddress" class="w-full border rounded-lg px-3 py-2 text-sm bg-white" placeholder="ঠিকানা">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition shadow-sm">
+                            সাবমিট করুন
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- 4. OTHER PRODUCTS TAB -->
+            <section id="tab-products" class="tab-content hidden">
+                <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-sm border p-6 sm:p-8">
+                    <h2 class="text-xl font-bold text-slate-800 mb-6 flex items-center space-x-2 border-b pb-3">
+                        <i class="fa-solid fa-box-archive text-blue-600"></i>
+                        <span>অন্যান্য প্রোডাক্ট বিক্রি</span>
+                    </h2>
+                    <form id="formProducts" onsubmit="handleTransaction(event, 'products')" class="space-y-4">
+                        <div id="productListContainer" class="space-y-3">
+                            <div class="flex items-center space-x-2 product-row">
+                                <input type="text" placeholder="প্রোডাক্টের নাম" required class="flex-grow border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none prod-name">
+                                <input type="number" placeholder="দাম (৳)" min="0" required class="w-32 border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none prod-price">
+                                <button type="button" onclick="removeProductRow(this)" class="bg-red-100 text-red-600 hover:bg-red-200 px-3 py-2.5 rounded-lg transition hidden remove-btn">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center">
+                            <button type="button" onclick="addProductRow()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-2">
+                                <i class="fa-solid fa-plus text-blue-600"></i>
+                                <span>আরেকটি প্রোডাক্ট যোগ করুন</span>
+                            </button>
+                            <div class="w-48">
+                                <select id="prodPaymentType" class="w-full border rounded-lg px-3 py-2 bg-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                    <option value="Paid">নগদ (Paid)</option>
+                                    <option value="Due">বাকি (Due)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Customer Info -->
+                        <div class="border-t pt-4 mt-4 space-y-4 bg-slate-50 p-4 rounded-xl">
+                            <h4 class="text-sm font-semibold text-slate-700">গ্রাহকের তথ্য</h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-600 mb-1">নাম</label>
+                                    <input type="text" id="prodCustName" class="w-full border rounded-lg px-3 py-2 text-sm bg-white" placeholder="গ্রাহকের নাম">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-600 mb-1">ফোন নম্বর</label>
+                                    <input type="text" id="prodCustPhone" class="w-full border rounded-lg px-3 py-2 text-sm bg-white" placeholder="মোবাইল নম্বর">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">ঠিকানা</label>
+                                <input type="text" id="prodCustAddress" class="w-full border rounded-lg px-3 py-2 text-sm bg-white" placeholder="ঠিকানা">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition shadow-sm">
+                            সাবমিট করুন
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- 5. MOBILE BANKING TAB -->
+            <section id="tab-banking" class="tab-content hidden">
+                <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-sm border p-6 sm:p-8">
+                    <h2 class="text-xl font-bold text-slate-800 mb-6 flex items-center space-x-2 border-b pb-3">
+                        <i class="fa-solid fa-wallet text-blue-600"></i>
+                        <span>মোবাইল ব্যাংকিং সেবা</span>
+                    </h2>
+                    <form id="formBanking" onsubmit="handleTransaction(event, 'banking')" class="space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">অপারেটর</label>
+                                <select id="bankOperator" class="w-full border rounded-lg px-4 py-2.5 bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                    <option value="Bikash">বিকাশ (Bkash)</option>
+                                    <option value="Nogod">নগদ (Nagad)</option>
+                                    <option value="Rocket">রকেট (Rocket)</option>
+                                    <option value="Upai">উপায় (Upai)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">মাধ্যম</label>
+                                <select id="bankMedium" class="w-full border rounded-lg px-4 py-2.5 bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                    <option value="Cash Out">Cash Out</option>
+                                    <option value="Cash In">Cash In</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">পেমেন্ট</label>
+                                <select id="bankPaymentType" class="w-full border rounded-lg px-4 py-2.5 bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                    <option value="Paid">নগদ (Paid)</option>
+                                    <option value="Due">বাকি (Due)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">টাকার পরিমাণ (৳)</label>
+                            <input type="number" id="bankAmount" min="0" required class="w-full border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="উদাহরণ: ১০০০">
+                        </div>
+
+                        <!-- Customer Info -->
+                        <div class="border-t pt-4 mt-4 space-y-4 bg-slate-50 p-4 rounded-xl">
+                            <h4 class="text-sm font-semibold text-slate-700">গ্রাহকের তথ্য</h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-600 mb-1">নাম</label>
+                                    <input type="text" id="bankCustName" class="w-full border rounded-lg px-3 py-2 text-sm bg-white" placeholder="গ্রাহকের নাম">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-600 mb-1">ফোন নম্বর</label>
+                                    <input type="text" id="bankCustPhone" class="w-full border rounded-lg px-3 py-2 text-sm bg-white" placeholder="মোবাইল নম্বর">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">ঠিকানা</label>
+                                <input type="text" id="bankCustAddress" class="w-full border rounded-lg px-3 py-2 text-sm bg-white" placeholder="ঠিকানা">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition shadow-sm">
+                            সাবমিট করুন
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- 6. SHOP EXPENSE TAB -->
+            <section id="tab-expense" class="tab-content hidden space-y-6">
+                <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-sm border p-6 sm:p-8">
+                    <h2 class="text-xl font-bold text-slate-800 mb-6 flex items-center space-x-2 border-b pb-3">
+                        <i class="fa-solid fa-money-bill-transfer text-red-600"></i>
+                        <span>দোকানের খরচ এন্ট্রি ও ফিল্টার রিপোর্ট</span>
+                    </h2>
+                    
+                    <!-- Expense Entry Form -->
+                    <form id="formExpense" onsubmit="handleExpense(event)" class="space-y-4 bg-slate-50 p-4 rounded-xl border mb-6">
+                        <h3 class="text-sm font-bold text-slate-700">নতুন খরচ এন্ট্রি করুন</h3>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">খরচের খাত / কারণ</label>
+                            <input type="text" id="expenseReason" required class="w-full border rounded-lg px-4 py-2.5 bg-white focus:ring-2 focus:ring-red-500 focus:outline-none" placeholder="উদাহরণ: চা-নাস্তা, বিদ্যুৎ বিল, পেপার কেনা ইত্যাদি">
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">টাকার পরিমাণ (৳)</label>
+                                <input type="number" id="expenseAmount" min="0" required class="w-full border rounded-lg px-4 py-2.5 bg-white focus:ring-2 focus:ring-red-500 focus:outline-none" placeholder="উদাহরণ: ২০০">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">নোট / মন্তব্য (ঐচ্ছিক)</label>
+                                <input type="text" id="expenseNote" class="w-full border rounded-lg px-4 py-2.5 bg-white focus:ring-2 focus:ring-red-500 focus:outline-none" placeholder="কাকে দেওয়া হয়েছে বা বিস্তারিত">
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2.5 rounded-lg transition shadow-sm">
+                            খরচ এন্ট্রি সংরক্ষণ করুন
+                        </button>
+                    </form>
+
+                    <!-- Expense Filter Options -->
+                    <div class="border-t pt-6 space-y-4">
+                        <h3 class="text-base font-bold text-slate-800 flex items-center space-x-2">
+                            <i class="fa-solid fa-filter text-red-600"></i>
+                            <span>খরচ ফিল্টার করুন (তারিখ অনুযায়ী বা মাসিক)</span>
+                        </h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">শুরু তারিখ (From Date)</label>
+                                <input type="date" id="expenseStartDate" class="w-full border rounded-lg px-3 py-2 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">শেষ তারিখ (To Date)</label>
+                                <input type="date" id="expenseEndDate" class="w-full border rounded-lg px-3 py-2 text-sm">
+                            </div>
+                            <div class="flex space-x-2">
+                                <button onclick="filterExpenses()" class="flex-grow bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-lg text-sm transition shadow-sm">
+                                    ফিল্টার
+                                </button>
+                                <button onclick="resetExpenseFilter()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 rounded-lg text-sm transition">
+                                    সব
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap justify-between items-center bg-red-50 p-3 rounded-lg border border-red-100">
+                            <span id="expenseFilterTitle" class="text-sm font-semibold text-red-800">সকল খরচের তালিকা</span>
+                            <span id="expenseTotalAmount" class="font-bold text-red-700 text-base">মোট খরচ: ৳ ০</span>
+                        </div>
+
+                        <!-- Expense Table -->
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-100 text-slate-600 text-sm">
+                                        <th class="p-3 rounded-l-lg">তারিখ ও সময়</th>
+                                        <th class="p-3">বিবরণ</th>
+                                        <th class="p-3">স্টাফ</th>
+                                        <th class="p-3 text-right">টাকা</th>
+                                        <th class="p-3 text-center rounded-r-lg">অ্যাকশন</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="expenseTableBody" class="text-sm divide-y divide-slate-100">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 7. DUE COLLECTION TAB -->
+            <section id="tab-dueCollection" class="tab-content hidden">
+                <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-sm border p-6 sm:p-8 space-y-6">
+                    <h2 class="text-xl font-bold text-slate-800 mb-4 flex items-center space-x-2 border-b pb-3">
+                        <i class="fa-solid fa-hand-holding-dollar text-emerald-600"></i>
+                        <span>বাকি টাকা গ্রহণ ও পরিশোধ</span>
+                    </h2>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">বাকি থাকা গ্রাহক নির্বাচন করুন বা নাম খুঁজুন</label>
+                        <select id="dueCustomerSelect" onchange="loadCustomerDueDetails()" class="w-full border rounded-lg px-4 py-2.5 bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            <option value="">-- গ্রাহক সিলেক্ট করুন --</option>
+                        </select>
+                    </div>
+
+                    <div id="customerDueInfoBox" class="bg-slate-50 p-4 rounded-xl border hidden space-y-3">
+                        <p class="text-sm font-medium text-slate-700">গ্রাহকের নাম: <span id="lblDueName" class="font-bold text-slate-900"></span></p>
+                        <p class="text-sm font-medium text-slate-700">ফোন নম্বর: <span id="lblDuePhone" class="font-bold text-slate-900"></span></p>
+                        <p class="text-sm font-medium text-slate-700">মোট বর্তমান বকেয়া: <span id="lblDueTotal" class="font-bold text-red-600 text-lg">৳ ০</span></p>
+                        
+                        <div class="pt-2 border-t">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">কত টাকা গ্রহণ করা হলো?</label>
+                            <input type="number" id="payDueAmount" min="0" class="w-full border rounded-lg px-4 py-2.5 bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="টাকার পরিমাণ লিখুন">
+                        </div>
+                        <button onclick="submitDuePayment()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 rounded-lg transition shadow-sm">
+                            বাকি টাকা জমা নিন (Paid)
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 8. REPORTS TAB -->
+            <section id="tab-reports" class="tab-content hidden space-y-6">
+                <div class="bg-white rounded-xl shadow-sm border p-6 space-y-4">
+                    <h3 class="text-lg font-bold text-slate-800 flex items-center space-x-2">
+                        <i class="fa-solid fa-filter text-blue-600"></i>
+                        <span>তারিখ অনুযায়ী ফিল্টার ও বিস্তারিত হিসাব রিপোর্ট</span>
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">শুরু তারিখ</label>
+                            <input type="date" id="filterStartDate" class="w-full border rounded-lg px-3 py-2 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">শেষ তারিখ</label>
+                            <input type="date" id="filterEndDate" class="w-full border rounded-lg px-3 py-2 text-sm">
+                        </div>
+                        <div class="flex space-x-2">
+                            <button onclick="filterReports()" class="flex-grow bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg text-sm transition shadow-sm">
+                                ফিল্টার করুন
+                            </button>
+                            <button onclick="resetFilters()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 rounded-lg text-sm transition">
+                                রিসেট
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Summary Cards Inside Report -->
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 pt-4 border-t">
+                        <div class="bg-blue-50 p-3 rounded-xl border border-blue-100 text-center">
+                            <p class="text-xs text-blue-600 font-medium">মোট আয় (Cash)</p>
+                            <h4 id="repTotalIncome" class="text-lg font-bold text-blue-800">৳ ০</h4>
+                        </div>
+                        <div class="bg-amber-50 p-3 rounded-xl border border-amber-100 text-center">
+                            <p class="text-xs text-amber-600 font-medium">মোট বকেয়া</p>
+                            <h4 id="repTotalDue" class="text-lg font-bold text-amber-800">৳ ০</h4>
+                        </div>
+                        <div class="bg-red-50 p-3 rounded-xl border border-red-100 text-center">
+                            <p class="text-xs text-red-600 font-medium">মোট খরচ</p>
+                            <h4 id="repTotalExpense" class="text-lg font-bold text-red-800">৳ ০</h4>
+                        </div>
+                        <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-100 text-center">
+                            <p class="text-xs text-emerald-600 font-medium">প্রিন্ট পেজ</p>
+                            <h4 id="repPrintPages" class="text-lg font-bold text-emerald-800">০ পেজ</h4>
+                        </div>
+                        <div class="bg-indigo-50 p-3 rounded-xl border border-indigo-100 text-center">
+                            <p class="text-xs text-indigo-600 font-medium">ফটো কপি পেজ</p>
+                            <h4 id="repPcPages" class="text-lg font-bold text-indigo-800">০ পেজ</h4>
+                        </div>
+                        <div class="bg-rose-50 p-3 rounded-xl border border-rose-100 text-center">
+                            <p class="text-xs text-rose-600 font-medium">নষ্ট পেজ</p>
+                            <h4 id="repDamagedPages" class="text-lg font-bold text-rose-800">০ পেজ</h4>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border p-6 space-y-4">
+                    <div class="flex flex-wrap justify-between items-center gap-4">
+                        <h3 class="text-lg font-bold text-slate-800 flex items-center space-x-2">
+                            <i class="fa-solid fa-list text-blue-600"></i>
+                            <span>লেনদেন তালিকা (Excel Style)</span>
+                        </h3>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-2 shadow-sm">
+                                <i class="fa-solid fa-file-excel"></i>
+                                <span>Excel Sheet এ ডাউনলোড</span>
+                            </button>
+                            <button onclick="openClearDataModal()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-2 shadow-sm">
+                                <i class="fa-solid fa-trash-can"></i>
+                                <span>সব ডাটা মুছুন</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-600 text-sm">
+                                    <th class="p-3 rounded-l-lg">তারিখ ও সময়</th>
+                                    <th class="p-3">টাইপ/ক্যাটাগরি</th>
+                                    <th class="p-3">বিবরণ / ডিটেইলস</th>
+                                    <th class="p-3">গ্রাহক</th>
+                                    <th class="p-3">স্ট্যাটাস</th>
+                                    <th class="p-3">স্টাফ</th>
+                                    <th class="p-3 text-right">টাকা</th>
+                                    <th class="p-3 text-center rounded-r-lg">অ্যাকশন</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fullReportTable" class="text-sm divide-y divide-slate-100">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 9. BACKUP & RESTORE TAB -->
+            <section id="tab-backup" class="tab-content hidden space-y-6">
+                <div class="max-w-2xl mx-auto space-y-6">
+                    <!-- Backup Box -->
+                    <div class="bg-white rounded-xl shadow-sm border p-6 space-y-4">
+                        <h3 class="text-lg font-bold text-slate-800 flex items-center space-x-2 border-b pb-3">
+                            <i class="fa-solid fa-cloud-arrow-up text-blue-600"></i>
+                            <span>গুগল ড্রাইভ ব্যাকআপ</span>
+                        </h3>
+                        <p class="text-sm text-slate-600">আপনার শপের ডাটা সুরক্ষিত রাখতে গুগল ড্রাইভ লিংক এখানে দিয়ে ব্যাকআপ ফাইল নামিয়ে ড্রাইভে রাখুন।</p>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">গুগল ড্রাইভ লিংক</label>
+                            <input type="text" id="gdriveLink" class="w-full border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="এখানে আপনার গুগল ড্রাইভ লিংক দিন...">
+                        </div>
+                        <button onclick="performBackup()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition shadow-sm flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <span>ব্যাকআপ ফাইল ডাউনলোড করুন</span>
+                        </button>
+                    </div>
+
+                    <!-- Restore Box -->
+                    <div class="bg-white rounded-xl shadow-sm border p-6 space-y-4">
+                        <h3 class="text-lg font-bold text-slate-800 flex items-center space-x-2 border-b pb-3">
+                            <i class="fa-solid fa-rotate-left text-blue-600"></i>
+                            <span>ডাটা রিস্টোর (Restore)</span>
+                        </h3>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">ব্যাকআপ JSON কোড বা ডাটা</label>
+                            <textarea id="restoreInput" rows="3" class="w-full border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="এখানে ব্যাকআপ ডাটা পেস্ট করুন..."></textarea>
+                        </div>
+                        <button onclick="performRestore()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 rounded-lg transition shadow-sm flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-rotate-right"></i>
+                            <span>রিস্টোর করুন</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Password Verification Modal for Deletion -->
+    <div id="passwordModal" class="fixed inset-0 bg-slate-900 bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-xl shadow-lg max-w-md w-full p-6 space-y-4 mx-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 id="modalTitle" class="text-lg font-bold text-red-600 flex items-center space-x-2">
+                    <i class="fa-solid fa-lock"></i>
+                    <span>পাসওয়ার্ড যাচাই আবশ্যক</span>
+                </h3>
+                <button onclick="closePasswordModal()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <p id="modalDesc" class="text-sm text-slate-600">
+                এই এন্ট্রি ডিলিট বা সব ডাটা মুছার জন্য পাসওয়ার্ড দিতে হবে। পাসওয়ার্ড জানতে কল করুন <strong class="text-blue-600">01771810009</strong> নম্বরে।
+            </p>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">পাসওয়ার্ড দিন</label>
+                <input type="password" id="passwordInput" class="w-full border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-red-500 focus:outline-none" placeholder="পাসওয়ার্ড লিখুন...">
+            </div>
+            <div class="flex space-x-3 pt-2">
+                <button onclick="verifyPasswordAction()" class="flex-grow bg-red-600 hover:bg-red-700 text-white font-medium py-2.5 rounded-lg transition shadow-sm">
+                    নিশ্চিত করুন
+                </button>
+                <button onclick="closePasswordModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2.5 rounded-lg font-medium transition">
+                    বাতিল
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t py-4 mt-auto text-center text-xs sm:text-sm text-slate-500 space-y-1">
+        <p>Rajshahi AIR Travels শপ ম্যানেজমেন্ট সিস্টেম © ২০২৬ | সর্বস্বত্ব সংরক্ষিত</p>
+        <p class="text-blue-600 font-medium">This apps created Abu bokor Siddiq</p>
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // State Management
+        let transactions = JSON.parse(localStorage.getItem('rajshahi_air_transactions')) || [];
+        let savedDriveLink = localStorage.getItem('rajshahi_air_gdrive') || '';
+        
+        let pendingAction = null; 
+        let pendingParam = null;
+
+        // Initialize App & Login Check
+        window.onload = function() {
+            checkLoginState();
+        };
+
+        function checkLoginState() {
+            const isLoggedIn = sessionStorage.getItem('rajshahi_air_loggedin');
+            if (isLoggedIn === 'true') {
+                document.getElementById('loginOverlay').classList.add('hidden');
+                document.getElementById('mainAppWrapper').classList.remove('hidden');
+                document.getElementById('mainAppWrapper').classList.add('flex');
+                initializeAppContent();
+            } else {
+                document.getElementById('loginOverlay').classList.remove('hidden');
+                document.getElementById('mainAppWrapper').classList.add('hidden');
+            }
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+
+            if (email === 'rattraining5@gmail.com' && password === 'Rat@9293') {
+                sessionStorage.setItem('rajshahi_air_loggedin', 'true');
+                checkLoginState();
+            } else {
+                alert('ভুল ইমেইল বা পাসওয়ার্ড! সঠিক তথ্য দিন।');
+            }
+        }
+
+        function handleLogout() {
+            sessionStorage.removeItem('rajshahi_air_loggedin');
+            checkLoginState();
+        }
+
+        // Recovery Modal Functions
+        function openRecoveryModal() {
+            document.getElementById('recoveryCodeInput').value = '';
+            document.getElementById('recoveryResultBox').classList.add('hidden');
+            document.getElementById('rocketMsgBox').classList.add('hidden');
+            document.getElementById('recoveryModal').classList.remove('hidden');
+        }
+
+        function closeRecoveryModal() {
+            document.getElementById('recoveryModal').classList.add('hidden');
+        }
+
+        function verifyRecoveryCode() {
+            const code = document.getElementById('recoveryCodeInput').value.trim();
+            if (code === '017718100090') {
+                document.getElementById('recEmail').innerText = 'rattraining5@gmail.com';
+                document.getElementById('recPass').innerText = 'Rat@9293';
+                document.getElementById('recoveryResultBox').classList.remove('hidden');
+            } else {
+                alert('ভুল রিকভারি কোড বা নম্বর!');
+            }
+        }
+
+        function triggerRocketMessage() {
+            document.getElementById('rocketMsgBox').classList.remove('hidden');
+        }
+
+        function initializeAppContent() {
+            updateCurrentDate();
+            document.getElementById('gdriveLink').value = savedDriveLink;
+            refreshDashboard();
+            filterReports(); 
+            populateDueCustomers();
+            refreshExpenseTable();
+            
+            const todayStr = new Date().toISOString().split('T')[0];
+            document.getElementById('filterStartDate').value = todayStr;
+            document.getElementById('filterEndDate').value = todayStr;
+            document.getElementById('expenseStartDate').value = todayStr;
+            document.getElementById('expenseEndDate').value = todayStr;
+        }
+
+        function updateCurrentDate() {
+            const now = new Date();
+            const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+            document.getElementById('currentDateDisplay').innerText = now.toLocaleDateString('bn-BD', options);
+        }
+
+        // Tab Switching
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('bg-blue-600', 'text-white', 'shadow-sm');
+                el.classList.add('text-slate-600', 'hover:bg-slate-100');
+            });
+
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`nav-${tabId}`);
+            activeBtn.classList.remove('text-slate-600', 'hover:bg-slate-100');
+            activeBtn.classList.add('bg-blue-600', 'text-white', 'shadow-sm');
+
+            if(tabId === 'dueCollection') {
+                populateDueCustomers();
+            }
+            if(tabId === 'expense') {
+                refreshExpenseTable();
+            }
+            if(tabId === 'reports') {
+                filterReports();
+            }
+        }
+
+        // Add Product Row in Products Tab
+        function addProductRow() {
+            const container = document.getElementById('productListContainer');
+            const newRow = document.createElement('div');
+            newRow.className = 'flex items-center space-x-2 product-row';
+            newRow.innerHTML = `
+                <input type="text" placeholder="প্রোডাক্টের নাম" required class="flex-grow border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none prod-name">
+                <input type="number" placeholder="দাম (৳)" min="0" required class="w-32 border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none prod-price">
+                <button type="button" onclick="removeProductRow(this)" class="bg-red-100 text-red-600 hover:bg-red-200 px-3 py-2.5 rounded-lg transition hidden remove-btn">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            `;
+            container.appendChild(newRow);
+            updateRemoveButtons();
+        }
+
+        function removeProductRow(btn) {
+            btn.closest('.product-row').remove();
+            updateRemoveButtons();
+        }
+
+        function updateRemoveButtons() {
+            const rows = document.querySelectorAll('.product-row');
+            rows.forEach((row) => {
+                const removeBtn = row.querySelector('.remove-btn');
+                if (rows.length > 1) {
+                    removeBtn.classList.remove('hidden');
+                } else {
+                    removeBtn.classList.add('hidden');
+                }
+            });
+        }
+
+        // Handle General Transactions
+        function handleTransaction(event, type) {
+            event.preventDefault();
+            const staff = document.getElementById('globalStaff').value;
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0];
+            const timeStr = now.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' });
+
+            let details = '';
+            let amount = 0;
+            let paymentType = 'Paid';
+            let custName = '', custPhone = '', custAddress = '';
+            let printPagesCount = 0;
+            let photocopyPagesCount = 0;
+            let damagedPagesCount = 0;
+
+            if (type === 'photocopy') {
+                photocopyPagesCount = parseInt(document.getElementById('pcPages').value) || 0;
+                damagedPagesCount = parseInt(document.getElementById('pcDamaged').value) || 0;
+                amount = parseFloat(document.getElementById('pcAmount').value);
+                paymentType = document.getElementById('pcPaymentType').value;
+                details = `ফটো কপি: ${photocopyPagesCount} পেজ (নষ্ট: ${damagedPagesCount} পেজ)`;
+                custName = document.getElementById('pcCustName').value.trim();
+                custPhone = document.getElementById('pcCustPhone').value.trim();
+                custAddress = document.getElementById('pcCustAddress').value.trim();
+                document.getElementById('formPhotocopy').reset();
+            } 
+            else if (type === 'print') {
+                printPagesCount = parseInt(document.getElementById('printPages').value) || 0;
+                const printType = document.getElementById('printType').value;
+                damagedPagesCount = parseInt(document.getElementById('printDamaged').value) || 0;
+                amount = parseFloat(document.getElementById('printAmount').value);
+                paymentType = document.getElementById('printPaymentType').value;
+                details = `প্রিন্ট [${printType}]: ${printPagesCount} পেজ (নষ্ট: ${damagedPagesCount} পেজ)`;
+                custName = document.getElementById('printCustName').value.trim();
+                custPhone = document.getElementById('printCustPhone').value.trim();
+                custAddress = document.getElementById('printCustAddress').value.trim();
+                document.getElementById('formPrint').reset();
+            } 
+            else if (type === 'products') {
+                const rows = document.querySelectorAll('.product-row');
+                let prodSummary = [];
+                rows.forEach(row => {
+                    const pName = row.querySelector('.prod-name').value;
+                    const pPrice = parseFloat(row.querySelector('.prod-price').value);
+                    amount += pPrice;
+                    prodSummary.push(`${pName} (৳${pPrice})`);
+                });
+                paymentType = document.getElementById('prodPaymentType').value;
+                details = `প্রোডাক্ট বিক্রি: ${prodSummary.join(', ')}`;
+                custName = document.getElementById('prodCustName').value.trim();
+                custPhone = document.getElementById('prodCustPhone').value.trim();
+                custAddress = document.getElementById('prodCustAddress').value.trim();
+                document.getElementById('formProducts').reset();
+                document.getElementById('productListContainer').innerHTML = `
+                    <div class="flex items-center space-x-2 product-row">
+                        <input type="text" placeholder="প্রোডাক্টের নাম" required class="flex-grow border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none prod-name">
+                        <input type="number" placeholder="দাম (৳)" min="0" required class="w-32 border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none prod-price">
+                        <button type="button" onclick="removeProductRow(this)" class="bg-red-100 text-red-600 hover:bg-red-200 px-3 py-2.5 rounded-lg transition hidden remove-btn">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+            }
+            else if (type === 'banking') {
+                const operator = document.getElementById('bankOperator').value;
+                const medium = document.getElementById('bankMedium').value;
+                amount = parseFloat(document.getElementById('bankAmount').value);
+                paymentType = document.getElementById('bankPaymentType').value;
+                details = `মোবাইল ব্যাংকিং [${operator} - ${medium}]`;
+                custName = document.getElementById('bankCustName').value.trim();
+                custPhone = document.getElementById('bankCustPhone').value.trim();
+                custAddress = document.getElementById('bankCustAddress').value.trim();
+                document.getElementById('formBanking').reset();
+            }
+
+            if (paymentType === 'Due' && (!custName || !custPhone)) {
+                alert('বাকি রাখতে হলে গ্রাহকের নাম এবং ফোন নম্বর অবশ্যই দিতে হবে!');
+                return;
+            }
+
+            const transactionObj = {
+                id: Date.now(),
+                date: dateStr,
+                time: timeStr,
+                category: getCategoryName(type),
+                details: details,
+                custName: custName || 'সাধারণ গ্রাহক',
+                custPhone: custPhone || 'প্রযোজ্য নয়',
+                custAddress: custAddress || 'প্রযোজ্য নয়',
+                staff: staff,
+                amount: amount,
+                paymentType: paymentType,
+                printPages: printPagesCount,
+                photocopyPages: photocopyPagesCount,
+                damagedPages: damagedPagesCount
+            };
+
+            transactions.unshift(transactionObj);
+            saveToLocalStorage();
+            refreshDashboard();
+            filterReports();
+            populateDueCustomers();
+
+            alert('সফলভাবে এন্ট্রি সংরক্ষিত হয়েছে!');
+        }
+
+        // Handle Expense Entry
+        function handleExpense(event) {
+            event.preventDefault();
+            const staff = document.getElementById('globalStaff').value;
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0];
+            const timeStr = now.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' });
+
+            const reason = document.getElementById('expenseReason').value;
+            const amount = parseFloat(document.getElementById('expenseAmount').value);
+            const note = document.getElementById('expenseNote').value;
+
+            const expenseObj = {
+                id: Date.now(),
+                date: dateStr,
+                time: timeStr,
+                category: 'দোকানের খরচ',
+                details: `খরচ: ${reason} ${note ? '('+note+')' : ''}`,
+                custName: 'দোকান খরচ',
+                custPhone: '-',
+                custAddress: '-',
+                staff: staff,
+                amount: amount,
+                paymentType: 'Expense',
+                printPages: 0,
+                photocopyPages: 0,
+                damagedPages: 0
+            };
+
+            transactions.unshift(expenseObj);
+            saveToLocalStorage();
+            refreshDashboard();
+            filterReports();
+            refreshExpenseTable();
+            document.getElementById('formExpense').reset();
+            alert('দোকানের খরচ সফলভাবে এন্ট্রি হয়েছে!');
+        }
+
+        function getCategoryName(type) {
+            switch(type) {
+                case 'photocopy': return 'ফটো কপি';
+                case 'print': return 'প্রিন্ট';
+                case 'products': return 'অন্যান্য প্রোডাক্ট';
+                case 'banking': return 'মোবাইল ব্যাংকিং';
+                case 'expense': return 'দোকানের খরচ';
+                case 'due-collection': return 'বাকি আদায়';
+                default: return type;
+            }
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('rajshahi_air_transactions', JSON.stringify(transactions));
+        }
+
+        // Expense Filter & Table Management
+        function refreshExpenseTable(filteredList = null) {
+            const expenseList = filteredList || transactions.filter(tx => tx.category === 'দোকানের খরচ');
+            let tableHTML = '';
+            let totalExpense = 0;
+
+            expenseList.forEach(tx => {
+                if(tx.category === 'দোকানের খরচ') {
+                    totalExpense += tx.amount;
+                    tableHTML += `
+                        <tr class="hover:bg-slate-50 transition border-b border-slate-50">
+                            <td class="p-3 font-medium text-slate-600">${tx.date} <span class="text-xs text-slate-400 block">${tx.time}</span></td>
+                            <td class="p-3 text-slate-700">${tx.details}</td>
+                            <td class="p-3 text-slate-600">${tx.staff}</td>
+                            <td class="p-3 text-right font-bold text-red-600">৳ ${tx.amount}</td>
+                            <td class="p-3 text-center">
+                                <button onclick="promptDeleteTransaction(${tx.id})" class="text-red-500 hover:text-red-700 p-1.5 rounded-lg transition" title="মুছে ফেলুন">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }
+            });
+
+            if (tableHTML === '') {
+                tableHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">কোনো খরচের তথ্য পাওয়া যায়নি।</td></tr>`;
+            }
+
+            document.getElementById('expenseTableBody').innerHTML = tableHTML;
+            document.getElementById('expenseTotalAmount').innerText = `মোট খরচ: ৳ ${totalExpense}`;
+        }
+
+        function filterExpenses() {
+            const startDate = document.getElementById('expenseStartDate').value;
+            const endDate = document.getElementById('expenseEndDate').value;
+
+            if (!startDate || !endDate) {
+                alert('দয়া করে শুরু এবং শেষ তারিখ উভয়ই সিলেক্ট করুন।');
+                return;
+            }
+
+            const filtered = transactions.filter(tx => tx.category === 'দোকানের খরচ' && tx.date >= startDate && tx.date <= endDate);
+            document.getElementById('expenseFilterTitle').innerText = `ফিল্টারকৃত খরচ (${startDate} থেকে ${endDate})`;
+            refreshExpenseTable(filtered);
+        }
+
+        function resetExpenseFilter() {
+            const todayStr = new Date().toISOString().split('T')[0];
+            document.getElementById('expenseStartDate').value = todayStr;
+            document.getElementById('expenseEndDate').value = todayStr;
+            document.getElementById('expenseFilterTitle').innerText = `সকল খরচের তালিকা`;
+            refreshExpenseTable();
+        }
+
+        // Due Collection Management
+        function populateDueCustomers() {
+            const selectEl = document.getElementById('dueCustomerSelect');
+            selectEl.innerHTML = '<option value="">-- গ্রাহক সিলেক্ট করুন --</option>';
+            
+            let dueMap = {};
+            transactions.forEach(tx => {
+                if(tx.paymentType === 'Due' && tx.custPhone && tx.custPhone.trim() !== '' && tx.custPhone !== 'প্রযোজ্য নয়') {
+                    let phone = tx.custPhone.trim();
+                    if(!dueMap[phone]) {
+                        dueMap[phone] = { name: tx.custName || 'অজানা গ্রাহক', phone: phone, totalDue: 0 };
+                    }
+                    if(tx.custName && tx.custName !== 'সাধারণ গ্রাহক' && tx.custName !== 'প্রযোজ্য নয়') {
+                        dueMap[phone].name = tx.custName;
+                    }
+                    dueMap[phone].totalDue += tx.amount;
+                }
+            });
+
+            transactions.forEach(tx => {
+                if(tx.category === 'বাকি আদায়' && tx.custPhone) {
+                    let phone = tx.custPhone.trim();
+                    if(dueMap[phone]) {
+                        dueMap[phone].totalDue -= tx.amount;
+                    }
+                }
+            });
+
+            for(let phone in dueMap) {
+                if(dueMap[phone].totalDue > 0) {
+                    let opt = document.createElement('option');
+                    opt.value = phone;
+                    opt.textContent = `${dueMap[phone].name} (${phone}) - বকেয়া: ৳${dueMap[phone].totalDue}`;
+                    selectEl.appendChild(opt);
+                }
+            }
+        }
+
+        function loadCustomerDueDetails() {
+            const phone = document.getElementById('dueCustomerSelect').value;
+            const box = document.getElementById('customerDueInfoBox');
+            if(!phone) {
+                box.classList.add('hidden');
+                return;
+            }
+
+            let name = '';
+            let totalDue = 0;
+            transactions.forEach(tx => {
+                if(tx.custPhone && tx.custPhone.trim() === phone) {
+                    if(tx.custName && tx.custName !== 'সাধারণ গ্রাহক' && tx.custName !== 'প্রযোজ্য নয়') {
+                        name = tx.custName;
+                    }
+                    if(tx.paymentType === 'Due') totalDue += tx.amount;
+                    if(tx.category === 'বাকি আদায়') totalDue -= tx.amount;
+                }
+            });
+
+            if(!name) name = phone;
+
+            document.getElementById('lblDueName').innerText = name;
+            document.getElementById('lblDuePhone').innerText = phone;
+            document.getElementById('lblDueTotal').innerText = `৳ ${totalDue}`;
+            document.getElementById('payDueAmount').value = totalDue;
+            box.classList.remove('hidden');
+        }
+
+        function submitDuePayment() {
+            const phone = document.getElementById('dueCustomerSelect').value;
+            const payAmount = parseFloat(document.getElementById('payDueAmount').value);
+            const staff = document.getElementById('globalStaff').value;
+
+            if(!phone || isNaN(payAmount) || payAmount <= 0) {
+                alert('সঠিক পরিমাণ টাকা লিখুন।');
+                return;
+            }
+
+            let name = document.getElementById('lblDueName').innerText;
+            let now = new Date();
+            
+            const dueCollectionObj = {
+                id: Date.now(),
+                date: now.toISOString().split('T')[0],
+                time: now.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' }),
+                category: 'বাকি আদায়',
+                details: `বাকি টাকা পরিশোধ গ্রহণ`,
+                custName: name,
+                custPhone: phone,
+                custAddress: 'প্রযোজ্য নয়',
+                staff: staff,
+                amount: payAmount,
+                paymentType: 'Paid',
+                printPages: 0,
+                photocopyPages: 0,
+                damagedPages: 0
+            };
+
+            transactions.unshift(dueCollectionObj);
+            saveToLocalStorage();
+            refreshDashboard();
+            filterReports();
+            populateDueCustomers();
+            document.getElementById('customerDueInfoBox').classList.add('hidden');
+            alert('বাকি টাকা সফলভাবে গ্রহণ করা হয়েছে!');
+        }
+
+        // Dashboard & Report Refresh Functions
+        function refreshDashboard() {
+            const todayStr = new Date().toISOString().split('T')[0];
+            const currentMonthPrefix = todayStr.substring(0, 7);
+
+            let todayTotalSales = 0;
+            let todayDue = 0;
+            let todayExpense = 0;
+            let monthSales = 0;
+            let monthDue = 0;
+            let totalDueAmount = 0;
+            let bortomanCash = 0;
+            let recentHTML = '';
+
+            // Calculate Bortoman Cash (All-time Paid sales + Due Collection - Expenses)
+            transactions.forEach(tx => {
+                if (tx.paymentType === 'Paid' && tx.category !== 'দোকানের খরচ') {
+                    bortomanCash += tx.amount;
+                }
+                if (tx.category === 'দোকানের খরচ') {
+                    bortomanCash -= tx.amount;
+                }
+            });
+
+            let activeDueMap = {};
+            transactions.forEach(tx => {
+                if(tx.paymentType === 'Due' && tx.custPhone && tx.custPhone.trim() !== '' && tx.custPhone !== 'প্রযোজ্য নয়') {
+                    let phone = tx.custPhone.trim();
+                    activeDueMap[phone] = (activeDueMap[phone] || 0) + tx.amount;
+                }
+                if(tx.category === 'বাকি আদায়' && tx.custPhone) {
+                    let phone = tx.custPhone.trim();
+                    activeDueMap[phone] = (activeDueMap[phone] || 0) - tx.amount;
+                }
+            });
+            for(let phone in activeDueMap) {
+                if(activeDueMap[phone] > 0) {
+                    totalDueAmount += activeDueMap[phone];
+                }
+            }
+
+            transactions.forEach((tx, index) => {
+                if (tx.date === todayStr) {
+                    if (tx.paymentType === 'Paid' && tx.category !== 'দোকানের খরচ' && tx.category !== 'বাকি আদায়') {
+                        todayTotalSales += tx.amount;
+                    }
+                    if (tx.paymentType === 'Due' && tx.category !== 'দোকানের খরচ' && tx.category !== 'বাকি আদায়') {
+                        todayDue += tx.amount;
+                    }
+                    if (tx.category === 'দোকানের খরচ') {
+                        todayExpense += tx.amount;
+                    }
+                    if (index < 5) {
+                        let badgeColor = tx.paymentType === 'Due' ? 'bg-amber-50 text-amber-700' : (tx.category === 'দোকানের খরচ' ? 'bg-red-50 text-red-700' : 'bg-blue-50 text-blue-700');
+                        recentHTML += `
+                            <tr class="hover:bg-slate-50 transition border-b border-slate-50">
+                                <td class="p-3 font-medium text-slate-600">${tx.time}</td>
+                                <td class="p-3"><span class="${badgeColor} px-2.5 py-1 rounded-full text-xs font-semibold">${tx.category}</span></td>
+                                <td class="p-3 text-slate-700">${tx.details}</td>
+                                <td class="p-3 text-slate-600">${tx.custName}</td>
+                                <td class="p-3"><span class="text-xs font-bold ${tx.paymentType==='Due'?'text-amber-600':'text-emerald-600'}">${tx.paymentType}</span></td>
+                                <td class="p-3 text-right font-bold text-slate-800">৳ ${tx.amount}</td>
+                            </tr>
+                        `;
+                    }
+                }
+
+                if (tx.date.startsWith(currentMonthPrefix)) {
+                    if (tx.paymentType === 'Paid' && tx.category !== 'দোকানের খরচ') {
+                        monthSales += tx.amount;
+                    }
+                    if (tx.paymentType === 'Due' && tx.category !== 'দোকানের খরচ') {
+                        monthDue += tx.amount;
+                    }
+                }
+            });
+
+            if (recentHTML === '') {
+                recentHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">আজকে এখনো কোনো লেনদেন হয়নি।</td></tr>`;
+            }
+
+            document.getElementById('dashBortomanCash').innerText = `৳ ${bortomanCash}`;
+            document.getElementById('dashTodaySales').innerText = `৳ ${todayTotalSales}`;
+            document.getElementById('dashTodayDue').innerText = `৳ ${todayDue}`;
+            document.getElementById('dashTodayExpense').innerText = `৳ ${todayExpense}`;
+            document.getElementById('dashMonthSales').innerText = `৳ ${monthSales}`;
+            document.getElementById('dashMonthDue').innerText = `৳ ${monthDue}`;
+            document.getElementById('dashTotalDue').innerText = `৳ ${totalDueAmount}`;
+            document.getElementById('recentTransactionsTable').innerHTML = recentHTML;
+        }
+
+        function filterReports() {
+            const startDate = document.getElementById('filterStartDate').value;
+            const endDate = document.getElementById('filterEndDate').value;
+
+            if (!startDate || !endDate) {
+                return;
+            }
+
+            const filtered = transactions.filter(tx => tx.date >= startDate && tx.date <= endDate);
+            
+            let totalIncome = 0;
+            let totalDue = 0;
+            let totalExpense = 0;
+            let printPages = 0;
+            let photocopyPages = 0;
+            let damagedPages = 0;
+            let tableHTML = '';
+
+            filtered.forEach(tx => {
+                if (tx.paymentType === 'Paid' && tx.category !== 'দোকানের খরচ') {
+                    totalIncome += tx.amount;
+                }
+                if (tx.paymentType === 'Due' && tx.category !== 'দোকানের খরচ' && tx.category !== 'বাকি আদায়') {
+                    totalDue += tx.amount;
+                }
+                if (tx.category === 'দোকানের খরচ') {
+                    totalExpense += tx.amount;
+                }
+                if (tx.printPages) printPages += tx.printPages;
+                if (tx.photocopyPages) photocopyPages += tx.photocopyPages;
+                if (tx.damagedPages) damagedPages += tx.damagedPages;
+
+                let badgeColor = tx.paymentType === 'Due' ? 'bg-amber-50 text-amber-700' : (tx.category === 'দোকানের খরচ' ? 'bg-red-50 text-red-700' : 'bg-slate-100 text-slate-700');
+                tableHTML += `
+                    <tr class="hover:bg-slate-50 transition border-b border-slate-50">
+                        <td class="p-3 font-medium text-slate-600">${tx.date} <span class="text-xs text-slate-400 block">${tx.time}</span></td>
+                        <td class="p-3"><span class="${badgeColor} px-2.5 py-1 rounded-full text-xs font-semibold">${tx.category}</span></td>
+                        <td class="p-3 text-slate-700">${tx.details}</td>
+                        <td class="p-3 text-slate-600">${tx.custName}<span class="text-xs text-slate-400 block">${tx.custPhone}</span></td>
+                        <td class="p-3 font-semibold text-xs ${tx.paymentType==='Due'?'text-amber-600':'text-emerald-600'}">${tx.paymentType}</td>
+                        <td class="p-3 text-slate-600">${tx.staff}</td>
+                        <td class="p-3 text-right font-bold text-slate-800">৳ ${tx.amount}</td>
+                        <td class="p-3 text-center">
+                            <button onclick="promptDeleteTransaction(${tx.id})" class="text-red-500 hover:text-red-700 p-1.5 rounded-lg transition" title="মুছে ফেলুন">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            if (tableHTML === '') {
+                tableHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400">এই তারিখের মধ্যে কোনো রিপোর্টের তথ্য পাওয়া যায়নি।</td></tr>`;
+            }
+
+            document.getElementById('repTotalIncome').innerText = `৳ ${totalIncome}`;
+            document.getElementById('repTotalDue').innerText = `৳ ${totalDue}`;
+            document.getElementById('repTotalExpense').innerText = `৳ ${totalExpense}`;
+            document.getElementById('repPrintPages').innerText = `${printPages} পেজ`;
+            document.getElementById('repPcPages').innerText = `${photocopyPages} পেজ`;
+            document.getElementById('repDamagedPages').innerText = `${damagedPages} পেজ`;
+
+            document.getElementById('fullReportTable').innerHTML = tableHTML;
+        }
+
+        function resetFilters() {
+            const todayStr = new Date().toISOString().split('T')[0];
+            document.getElementById('filterStartDate').value = todayStr;
+            document.getElementById('filterEndDate').value = todayStr;
+            filterReports();
+        }
+
+        // Password Protected Deletion & Clearing Data
+        function promptDeleteTransaction(id) {
+            pendingAction = 'delete_single';
+            pendingParam = id;
+            openPasswordModal();
+        }
+
+        function openClearDataModal() {
+            pendingAction = 'clear_all';
+            pendingParam = null;
+            openPasswordModal();
+        }
+
+        function openPasswordModal() {
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('passwordModal').classList.remove('hidden');
+        }
+
+        function closePasswordModal() {
+            document.getElementById('passwordModal').classList.add('hidden');
+            pendingAction = null;
+            pendingParam = null;
+        }
+
+        function verifyPasswordAction() {
+            const enteredPass = document.getElementById('passwordInput').value;
+            if (enteredPass === 'rat23747214') {
+                if (pendingAction === 'delete_single') {
+                    transactions = transactions.filter(tx => tx.id !== pendingParam);
+                    saveToLocalStorage();
+                    refreshDashboard();
+                    filterReports();
+                    populateDueCustomers();
+                    refreshExpenseTable();
+                    alert('সফলভাবে এন্ট্রি মুছে ফেলা হয়েছে!');
+                } else if (pendingAction === 'clear_all') {
+                    transactions = [];
+                    saveToLocalStorage();
+                    refreshDashboard();
+                    filterReports();
+                    populateDueCustomers();
+                    refreshExpenseTable();
+                    alert('সকল ডাটা সফলভাবে মুছে ফেলা হয়েছে!');
+                }
+                closePasswordModal();
+            } else {
+                alert('ভুল পাসওয়ার্ড! সঠিক পাসওয়ার্ড দিয়ে আবার চেষ্টা করুন। পাসওয়ার্ড জানতে 01771810009 নম্বরে কল করুন।');
+            }
+        }
+
+        // Export to CSV
+        function exportToCSV() {
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+            csvContent += "ID,Date,Time,Category,Details,Customer Name,Customer Phone,Payment Type,Staff,Amount,Print Pages,Photocopy Pages,Damaged Pages\n";
+
+            transactions.forEach(tx => {
+                let row = [
+                    tx.id,
+                    tx.date,
+                    tx.time,
+                    `"${tx.category}"`,
+                    `"${tx.details}"`,
+                    `"${tx.custName}"`,
+                    `"${tx.custPhone}"`,
+                    `"${tx.paymentType}"`,
+                    `"${tx.staff}"`,
+                    tx.amount,
+                    tx.printPages || 0,
+                    tx.photocopyPages || 0,
+                    tx.damagedPages || 0
+                ];
+                csvContent += row.join(",") + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Rajshahi_Air_Travels_Report_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Backup & Restore
+        function performBackup() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(transactions));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `rajshahi_air_backup_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            alert('ব্যাকআপ ফাইল সফলভাবে ডাউনলোড হয়েছে!');
+        }
+
+        function performRestore() {
+            const inputVal = document.getElementById('restoreInput').value.trim();
+            if (!inputVal) {
+                alert('দয়া করে ব্যাকআপ কোড বা JSON ডাটা এখানে দিন।');
+                return;
+            }
+
+            try {
+                const parsedData = JSON.parse(inputVal);
+                if (Array.isArray(parsedData)) {
+                    transactions = parsedData;
+                    saveToLocalStorage();
+                    refreshDashboard();
+                    filterReports();
+                    populateDueCustomers();
+                    refreshExpenseTable();
+                    alert('সফলভাবে ডাটা রিস্টোর করা হয়েছে!');
+                    document.getElementById('restoreInput').value = '';
+                } else {
+                    alert('সঠিক ব্যাকআপ ডাটা ফরম্যাট পাওয়া যায়নি।');
+                }
+            } catch (e) {
+                alert('রিস্টোর করতে সমস্যা হয়েছে। সঠিক JSON কোড দিন।');
+            }
+        }
+    </script>
+</body>
+</html>
