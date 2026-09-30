@@ -791,9 +791,8 @@
         <p class="text-blue-600 font-medium">This apps created Abu bokor Siddiq</p>
     </footer>
 
-    <!-- JavaScript Application Logic with Real JSONbin Cloud Sync & Persistent Login -->
+    <!-- JavaScript Application Logic with Direct CORS-free JSONbin Sync & Persistent Login -->
     <script>
-        // آپnar সঠিক Bin ID এবং API Key এখানে সংযুক্ত করা হলো
         const CLOUD_BIN_ID = "67cd9be3acd3cb34a8b79fba"; 
         const CLOUD_API_KEY = "$2a$10$VC82ebDYSpRgvpVao9eh.ppINQBDCK3AcQa.6qYMWIhUAfKazPa";
         
@@ -809,27 +808,25 @@
             fetchCloudData();
         };
 
-        // Fetch data from online JSONbin cloud
+        // Fetch data from online JSONbin cloud with proper headers
         async function fetchCloudData() {
             try {
-                let localData = localStorage.getItem('rajshahi_air_transactions');
-                if (localData) {
-                    transactions = JSON.parse(localData);
-                }
-                
-                if (CLOUD_BIN_ID !== "") {
-                    const response = await fetch(`https://api.jsonbin.io/v3/b/${CLOUD_BIN_ID}/latest`, {
-                        headers: {
-                            "X-Master-Key": CLOUD_API_KEY
-                        }
-                    });
-                    if(response.ok) {
-                        const cloudRes = await response.json();
-                        if(cloudRes && cloudRes.record && Array.isArray(cloudRes.record)) {
-                            transactions = cloudRes.record;
-                            saveToLocalStorageQuiet();
-                        }
+                const response = await fetch(`https://api.jsonbin.io/v3/b/${CLOUD_BIN_ID}/latest`, {
+                    method: 'GET',
+                    headers: {
+                        "X-Access-Key": CLOUD_API_KEY,
+                        "Content-Type": "application/json"
                     }
+                });
+                if(response.ok) {
+                    const cloudRes = await response.json();
+                    if(cloudRes && cloudRes.record && Array.isArray(cloudRes.record)) {
+                        transactions = cloudRes.record;
+                        saveToLocalStorageQuiet();
+                    }
+                } else {
+                    let localData = localStorage.getItem('rajshahi_air_transactions');
+                    if (localData) transactions = JSON.parse(localData);
                 }
             } catch(e) {
                 let localData = localStorage.getItem('rajshahi_air_transactions');
@@ -844,16 +841,14 @@
         async function syncToCloud() {
             saveToLocalStorageQuiet();
             try {
-                if (CLOUD_BIN_ID !== "") {
-                    await fetch(`https://api.jsonbin.io/v3/b/${CLOUD_BIN_ID}`, {
-                        method: 'PUT',
-                        headers: {
-                            "Content-Type": "application/json",
-                            "X-Master-Key": CLOUD_API_KEY
-                        },
-                        body: JSON.stringify(transactions)
-                    });
-                }
+                await fetch(`https://api.jsonbin.io/v3/b/${CLOUD_BIN_ID}`, {
+                    method: 'PUT',
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-Access-Key": CLOUD_API_KEY
+                    },
+                    body: JSON.stringify(transactions)
+                });
             } catch(e) {
                 // Offline fallback
             }
