@@ -791,10 +791,11 @@
         <p class="text-blue-600 font-medium">This apps created Abu bokor Siddiq</p>
     </footer>
 
-    <!-- JavaScript Application Logic with Persistent Login & Cloud Sync -->
+    <!-- JavaScript Application Logic with Real JSONbin Cloud Sync & Persistent Login -->
     <script>
-        const CLOUD_BIN_ID = "66f3322ead19ca34f8a183b0"; 
-        const CLOUD_API_KEY = "$2a$10$EXAMPLE_API_KEY_OR_PUBLIC_SYNC"; 
+        // آپnar সঠিক Bin ID এবং API Key এখানে সংযুক্ত করা হলো
+        const CLOUD_BIN_ID = "67cd9be3acd3cb34a8b79fba"; 
+        const CLOUD_API_KEY = "$2a$10$VC82ebDYSpRgvpVao9eh.ppINQBDCK3AcQa.6qYMWIhUAfKazPa";
         
         let transactions = [];
         let savedDriveLink = localStorage.getItem('rajshahi_air_gdrive') || '';
@@ -808,7 +809,7 @@
             fetchCloudData();
         };
 
-        // Fetch data from online cloud sync so all browsers show identical values
+        // Fetch data from online JSONbin cloud
         async function fetchCloudData() {
             try {
                 let localData = localStorage.getItem('rajshahi_air_transactions');
@@ -816,16 +817,18 @@
                     transactions = JSON.parse(localData);
                 }
                 
-                const response = await fetch(`https://api.jsonbin.io/v3/b/66f3322ead19ca34f8a183b0/latest`, {
-                    headers: {
-                        "X-Master-Key": "$2a$10$7h...shared..." 
-                    }
-                });
-                if(response.ok) {
-                    const cloudRes = await response.json();
-                    if(cloudRes && cloudRes.record && Array.isArray(cloudRes.record)) {
-                        transactions = cloudRes.record;
-                        saveToLocalStorageQuiet();
+                if (CLOUD_BIN_ID !== "") {
+                    const response = await fetch(`https://api.jsonbin.io/v3/b/${CLOUD_BIN_ID}/latest`, {
+                        headers: {
+                            "X-Master-Key": CLOUD_API_KEY
+                        }
+                    });
+                    if(response.ok) {
+                        const cloudRes = await response.json();
+                        if(cloudRes && cloudRes.record && Array.isArray(cloudRes.record)) {
+                            transactions = cloudRes.record;
+                            saveToLocalStorageQuiet();
+                        }
                     }
                 }
             } catch(e) {
@@ -841,21 +844,22 @@
         async function syncToCloud() {
             saveToLocalStorageQuiet();
             try {
-                await fetch(`https://api.jsonbin.io/v3/b/66f3322ead19ca34f8a183b0`, {
-                    method: 'PUT',
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-Master-Key": "$2a$10$7h...shared..."
-                    },
-                    body: JSON.stringify(transactions)
-                });
+                if (CLOUD_BIN_ID !== "") {
+                    await fetch(`https://api.jsonbin.io/v3/b/${CLOUD_BIN_ID}`, {
+                        method: 'PUT',
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-Master-Key": CLOUD_API_KEY
+                        },
+                        body: JSON.stringify(transactions)
+                    });
+                }
             } catch(e) {
                 // Offline fallback
             }
         }
 
         function checkLoginState() {
-            // Using localStorage so login persists on this browser until cache is cleared
             const isLoggedIn = localStorage.getItem('rajshahi_air_loggedin');
             if (isLoggedIn === 'true') {
                 document.getElementById('loginOverlay').classList.add('hidden');
@@ -1328,7 +1332,6 @@
             let bortomanCash = 0;
             let recentHTML = '';
 
-            // Calculate Bortoman Cash (All-time Paid sales + Due Collection - Expenses)
             transactions.forEach(tx => {
                 if (tx.paymentType === 'Paid' && tx.category !== 'দোকানের খরচ') {
                     bortomanCash += tx.amount;
