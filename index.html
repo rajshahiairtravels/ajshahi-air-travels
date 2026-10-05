@@ -6,7 +6,6 @@
     <title>Rajshahi AIR Travels - শপ ম্যানেজমেন্ট সিস্টেম</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -61,13 +60,22 @@
                 </button>
             </div>
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">আপনার Supabase অ্যাকাউন্টের ইমেইল দিন</label>
-                <input type="text" id="recoveryCodeInput" class="w-full border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="example@gmail.com">
+                <label class="block text-sm font-medium text-slate-700 mb-1">রিকভারি কোড বা নম্বর দিন</label>
+                <input type="text" id="recoveryCodeInput" class="w-full border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="কোড লিখুন...">
             </div>
-            <div id="recoveryResultBox" class="hidden bg-emerald-50 p-4 rounded-lg border border-emerald-200 text-sm text-emerald-800">পাসওয়ার্ড রিসেট লিংক আপনার ইমেইলে পাঠানো হয়েছে।</div>
+            <div id="recoveryResultBox" class="hidden bg-slate-50 p-4 rounded-lg border space-y-2 text-sm">
+                <p><strong>ইমেইল:</strong> <span id="recEmail" class="text-blue-700"></span></p>
+                <p><strong>পাসওয়ার্ড:</strong> <span id="recPass" class="text-red-600 font-bold"></span></p>
+                <button onclick="triggerRocketMessage()" class="w-full mt-2 bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg text-xs font-medium transition">
+                    রিকভারি অপশন (Rocket Check)
+                </button>
+            </div>
+            <div id="rocketMsgBox" class="hidden text-xs font-bold text-purple-700 bg-purple-50 p-3 rounded-lg text-center">
+                Type abubokor rocket no.
+            </div>
             <div class="flex space-x-3 pt-2">
                 <button onclick="verifyRecoveryCode()" class="flex-grow bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg transition shadow-sm">
-                    রিসেট লিংক পাঠান
+                    যাচাই করুন
                 </button>
                 <button onclick="closeRecoveryModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2.5 rounded-lg font-medium transition">
                     বন্ধ করুন
@@ -952,7 +960,7 @@
                 </button>
             </div>
             <p id="modalDesc" class="text-sm text-slate-600">
-                এই সংবেদনশীল কাজটি নিশ্চিত করতে আপনার Supabase অ্যাকাউন্টের বর্তমান পাসওয়ার্ড দিতে হবে। পাসওয়ার্ডটি এখানে সংরক্ষণ করা হয় না।
+                এই এন্ট্রি ডিলিট বা সব ডাটা মুছার জন্য পাসওয়ার্ড দিতে হবে। পাসওয়ার্ড জানতে কল করুন <strong class="text-blue-600">01771810009</strong> নম্বরে।
             </p>
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1">পাসওয়ার্ড দিন</label>
@@ -976,279 +984,268 @@
     </footer>
 
     <!-- JavaScript Application Logic with Advanced Data Integrity & Advance Pay Feature -->
-    <!-- JavaScript Application Logic: Supabase Online Backend + Advance Pay -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         const SUPABASE_URL = 'https://qzedvbkurzwdmnuhadne.supabase.co';
         const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_UFjNSgJQTcfgaFX6oviivw_SOaKbkSj';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby-JHUENUU09IVsXgzCGRKGY0dH58CFVnjji89TVC-NIjI0CmrcdInOShQBFIWvKHBipw/exec';
-
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby-JHUENUU09IVsXgzCGRKGY0dH58CFVnjji89TVC-NIjI0CmrcdInOShQBFIWvKHBipw/exec";
+        
         let transactions = [];
         let advancePayments = [];
         let advanceTransfers = [];
         let savedDriveLink = localStorage.getItem('rajshahi_air_gdrive') || '';
-        let pendingAction = null;
+        
+        let pendingAction = null; 
         let pendingParam = null;
         let selectedAdvanceCustPhone = null;
         let syncQueue = Promise.resolve();
-        let currentUser = null;
 
+        // Helper: HTML Escape for XSS prevention
         function escapeHtml(value) {
             return String(value ?? '')
-                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
         }
+
+        // Helper: CSV cell safe escaping
         function csvEscape(value) {
             const str = String(value ?? '');
             return `"${str.replace(/"/g, '""')}"`;
         }
-        function makeId(prefix='id') {
-            if (crypto?.randomUUID) return crypto.randomUUID();
-            return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2,10)}`;
-        }
-        function getLocalDateString() {
-            const parts = new Intl.DateTimeFormat('en-CA', {timeZone:'Asia/Dhaka', year:'numeric', month:'2-digit', day:'2-digit'}).formatToParts(new Date());
-            const m = Object.fromEntries(parts.map(p => [p.type,p.value]));
-            return `${m.year}-${m.month}-${m.day}`;
-        }
-        function getBanglaTime() {
-            return new Date().toLocaleTimeString('bn-BD', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Dhaka'});
-        }
-        function updateSyncStatus(text, cssClass) {
-            const badge = document.getElementById('syncStatusBadge');
-            if (badge) {
-                badge.className = `text-xs px-2.5 py-1 rounded-md border border-blue-700 ${cssClass}`;
-                badge.innerHTML = text === 'Syncing...' ? `<i class="fa-solid fa-rotate animate-spin mr-1"></i> ${text}` : escapeHtml(text);
+
+        // Helper: Safe LocalStorage Load
+        function loadLocalDataSafely() {
+            try {
+                const rawTx = localStorage.getItem('rajshahi_air_transactions');
+                const rawAdv = localStorage.getItem('rajshahi_air_advance_payments');
+                const rawTrans = localStorage.getItem('rajshahi_air_advance_transfers');
+
+                let txData = rawTx ? JSON.parse(rawTx) : [];
+                let advData = rawAdv ? JSON.parse(rawAdv) : [];
+                let transData = rawTrans ? JSON.parse(rawTrans) : [];
+
+                transactions = Array.isArray(txData) ? normalizeTransactions(txData) : [];
+                advancePayments = Array.isArray(advData) ? normalizeAdvances(advData) : [];
+                advanceTransfers = Array.isArray(transData) ? normalizeTransfers(transData) : [];
+            } catch (error) {
+                console.error('Invalid LocalStorage data:', error);
+                transactions = [];
+                advancePayments = [];
+                advanceTransfers = [];
             }
         }
+
         function saveToLocalStorageQuiet() {
             try {
                 localStorage.setItem('rajshahi_air_transactions', JSON.stringify(transactions));
                 localStorage.setItem('rajshahi_air_advance_payments', JSON.stringify(advancePayments));
                 localStorage.setItem('rajshahi_air_advance_transfers', JSON.stringify(advanceTransfers));
-                localStorage.setItem('rajshahi_air_gdrive', savedDriveLink || '');
-            } catch (e) {
-                console.error(e);
-                updateSyncStatus('Local Storage Error', 'bg-red-600 text-white');
+                updateSyncStatus('Synced', 'bg-emerald-600 text-white');
+            } catch (error) {
+                console.error('LocalStorage quota or save error:', error);
+                alert('লোকাল স্টোরেজ ফুল বা ত্রুটিপূর্ণ! ডেটা ব্রাউজারে সেভ হতে সমস্যা হচ্ছে।');
+                updateSyncStatus('Storage Error', 'bg-red-600 text-white');
             }
-        }
-        function loadLocalDataSafely() {
-            try {
-                const tx = JSON.parse(localStorage.getItem('rajshahi_air_transactions') || '[]');
-                const adv = JSON.parse(localStorage.getItem('rajshahi_air_advance_payments') || '[]');
-                const tr = JSON.parse(localStorage.getItem('rajshahi_air_advance_transfers') || '[]');
-                transactions = normalizeTransactions(tx);
-                advancePayments = normalizeAdvances(adv);
-                advanceTransfers = normalizeTransfers(tr);
-            } catch (e) {
-                console.error('Invalid local data:', e);
-                transactions = []; advancePayments = []; advanceTransfers = [];
-            }
-        }
-        function normalizeDateString(value) {
-            if (value === null || value === undefined || value === '') return '';
-            if (value instanceof Date && !isNaN(value.getTime())) {
-                const parts = new Intl.DateTimeFormat('en-CA', {timeZone:'Asia/Dhaka', year:'numeric', month:'2-digit', day:'2-digit'}).formatToParts(value);
-                const m = Object.fromEntries(parts.map(p => [p.type,p.value]));
-                return `${m.year}-${m.month}-${m.day}`;
-            }
-            let v = String(value).trim();
-            if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
-            // ISO datetime / timestamp
-            const iso = v.match(/^(\d{4}-\d{2}-\d{2})[T\s]/);
-            if (iso) return iso[1];
-            // Bangladesh-style DD/MM/YYYY or DD-MM-YYYY
-            let m = v.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
-            if (m) {
-                const dd=Number(m[1]), mm=Number(m[2]), yy=Number(m[3]);
-                if (mm>=1 && mm<=12 && dd>=1 && dd<=31) return `${yy}-${String(mm).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
-            }
-            // Date strings that the browser can parse: convert using Bangladesh timezone.
-            const parsed = new Date(v);
-            if (!isNaN(parsed.getTime())) {
-                const parts = new Intl.DateTimeFormat('en-CA', {timeZone:'Asia/Dhaka', year:'numeric', month:'2-digit', day:'2-digit'}).formatToParts(parsed);
-                const x = Object.fromEntries(parts.map(p => [p.type,p.value]));
-                if (x.year && x.month && x.day) return `${x.year}-${x.month}-${x.day}`;
-            }
-            return '';
         }
 
-        function normalizeTransactions(raw) {
-            if (!Array.isArray(raw)) return [];
-            const out = [];
-            const ids = new Set();
-            for (const tx of raw) {
-                if (!tx || typeof tx !== 'object') continue;
-                const amount = Number(tx.amount);
-                const paymentType = String(tx.paymentType || tx.payment_type || '').trim();
-                const date = normalizeDateString(tx.date);
-                if (!Number.isFinite(amount) || amount <= 0 || !['Paid','Due','Expense'].includes(paymentType) || !date) continue;
-                const id = String(tx.id || makeId('tx'));
-                if (ids.has(id)) continue; ids.add(id);
-                out.push({
-                    id, date, time: typeof tx.time === 'string' ? tx.time : '',
-                    category: typeof tx.category === 'string' ? tx.category : 'অন্যান্য',
-                    details: typeof tx.details === 'string' ? tx.details : '',
-                    custName: typeof tx.custName === 'string' && tx.custName.trim() ? tx.custName.trim() : 'সাধারণ গ্রাহক',
-                    custPhone: typeof tx.custPhone === 'string' ? tx.custPhone.trim() : 'প্রযোজ্য নয়',
-                    custAddress: typeof tx.custAddress === 'string' ? tx.custAddress.trim() : 'প্রযোজ্য নয়',
-                    staff: typeof tx.staff === 'string' ? tx.staff : 'Abu bokor',
-                    amount: Math.round(amount * 100) / 100,
-                    paymentType,
-                    printPages: Math.max(0, Number(tx.printPages ?? tx.print_pages) || 0),
-                    photocopyPages: Math.max(0, Number(tx.photocopyPages ?? tx.photocopy_pages) || 0),
-                    damagedPages: Math.max(0, Number(tx.damagedPages ?? tx.damaged_pages) || 0)
+        function updateSyncStatus(text, cssClass) {
+            const badge = document.getElementById('syncStatusBadge');
+            if(badge) {
+                badge.className = `text-xs px-2.5 py-1 rounded-md border border-blue-700 ${cssClass}`;
+                badge.innerHTML = text === 'Syncing...' ? `<i class="fa-solid fa-rotate animate-spin mr-1"></i> ${text}` : text;
+            }
+        }
+
+        // Merge helper for transactions without losing local items
+        function mergeTransactions(localData, remoteData) {
+            const mergedMap = new Map();
+            if (Array.isArray(localData)) {
+                localData.forEach(tx => { if (tx && tx.id) mergedMap.set(String(tx.id), tx); });
+            }
+            if (Array.isArray(remoteData)) {
+                remoteData.forEach(tx => { 
+                    if (tx && tx.id && !mergedMap.has(String(tx.id))) {
+                        mergedMap.set(String(tx.id), tx);
+                    }
                 });
             }
-            return out;
+            const result = Array.from(mergedMap.values());
+            result.sort((a, b) => {
+                const timeA = Number(String(a.id).split('_')[0]) || new Date(a.date || '').getTime() || 0;
+                const timeB = Number(String(b.id).split('_')[0]) || new Date(b.date || '').getTime() || 0;
+                return timeB - timeA;
+            });
+            return result;
         }
-        function normalizeAdvances(raw) {
-            if (!Array.isArray(raw)) return [];
-            const out=[]; const ids=new Set();
-            for (const a of raw) {
-                if (!a || typeof a !== 'object') continue;
-                const amount=Number(a.amount), date=normalizeDateString(a.date), name=String(a.custName||'').trim();
-                if (!Number.isFinite(amount)||amount<=0||!date||!name) continue;
-                const id=String(a.id||makeId('adv')); if(ids.has(id)) continue; ids.add(id);
-                out.push({id,date,time:typeof a.time==='string'?a.time:'',custName:name,custPhone:typeof a.custPhone==='string'?a.custPhone.trim():'',custAddress:typeof a.custAddress==='string'?a.custAddress.trim():'',staff:typeof a.staff==='string'?a.staff:'Abu bokor',amount:Math.round(amount*100)/100,details:typeof a.details==='string'?a.details:'অগ্রিম টাকা জমা'});
-            }
-            return out;
-        }
-        function normalizeTransfers(raw) {
-            if (!Array.isArray(raw)) return [];
-            const out=[]; const ids=new Set();
-            for (const t of raw) {
-                if (!t || typeof t !== 'object') continue;
-                const amount=Number(t.amount), date=normalizeDateString(t.date);
-                if (!Number.isFinite(amount)||amount<=0||!date) continue;
-                const id=String(t.id||makeId('trans')); if(ids.has(id)) continue; ids.add(id);
-                out.push({id,advanceId:String(t.advanceId||''),custName:typeof t.custName==='string'?t.custName:'গ্রাহক',custPhone:typeof t.custPhone==='string'?t.custPhone:'',amount:Math.round(amount*100)/100,date,time:typeof t.time==='string'?t.time:'',details:typeof t.details==='string'?t.details:'মূল ক্যাশে ট্রান্সফার'});
-            }
-            return out;
-        }
-        function mapTransactionRow(r){ return {id:r.id,date:r.date,time:r.time||'',category:r.category,details:r.details||'',custName:r.cust_name||'সাধারণ গ্রাহক',custPhone:r.cust_phone||'প্রযোজ্য নয়',custAddress:r.cust_address||'প্রযোজ্য নয়',staff:r.staff||'Abu bokor',amount:Number(r.amount),paymentType:r.payment_type,printPages:Number(r.print_pages)||0,photocopyPages:Number(r.photocopy_pages)||0,damagedPages:Number(r.damaged_pages)||0}; }
-        function mapAdvanceRow(r){ return {id:r.id,date:r.date,time:r.time||'',custName:r.cust_name,custPhone:r.cust_phone||'',custAddress:r.cust_address||'',staff:r.staff||'Abu bokor',amount:Number(r.amount),details:r.details||'অগ্রিম টাকা জমা'}; }
-        function mapTransferRow(r){ return {id:r.id,advanceId:r.advance_id,custName:r.cust_name,custPhone:r.cust_phone||'',amount:Number(r.amount),date:r.date,time:r.time||'',details:r.details||'মূল ক্যাশে ট্রান্সফার'}; }
-        function txToRow(t){ return {id:t.id,date:t.date,time:t.time,category:t.category,details:t.details,cust_name:t.custName,cust_phone:t.custPhone,cust_address:t.custAddress,staff:t.staff,amount:t.amount,payment_type:t.paymentType,print_pages:t.printPages,photocopy_pages:t.photocopyPages,damaged_pages:t.damagedPages}; }
-        function advToRow(a){ return {id:a.id,date:a.date,time:a.time,cust_name:a.custName,cust_phone:a.custPhone,cust_address:a.custAddress,staff:a.staff,amount:a.amount,details:a.details}; }
-        function transferToRow(t){ return {id:t.id,advance_id:t.advanceId,cust_name:t.custName,cust_phone:t.custPhone,amount:t.amount,date:t.date,time:t.time,details:t.details}; }
 
-        async function loadSupabaseData() {
-            // Load local cache first so the dashboard can render immediately.
+        // Validation & Normalization for Transactions
+        function normalizeTransactions(rawData) {
+            if (!Array.isArray(rawData)) return [];
+            let validList = [];
+            rawData.forEach(tx => {
+                if (!tx || typeof tx !== 'object') return;
+                const amt = Number(tx.amount);
+                if (!Number.isFinite(amt) || amt <= 0) return; // Reject negative or zero amount
+                
+                const paymentType = String(tx.paymentType || '').trim();
+                if (!['Paid', 'Due', 'Expense'].includes(paymentType)) return; // Strict paymentType check
+
+                const dateStr = String(tx.date || '').trim();
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return; // Strict YYYY-MM-DD date check
+
+                validList.push({
+                    id: tx.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : (Date.now() + '_' + Math.random())),
+                    date: dateStr,
+                    time: typeof tx.time === 'string' ? tx.time : '',
+                    category: typeof tx.category === 'string' ? tx.category : 'অন্যান্য',
+                    details: typeof tx.details === 'string' ? tx.details : '',
+                    custName: typeof tx.custName === 'string' ? tx.custName : 'সাধারণ গ্রাহক',
+                    custPhone: typeof tx.custPhone === 'string' ? tx.custPhone : 'প্রযোজ্য নয়',
+                    custAddress: typeof tx.custAddress === 'string' ? tx.custAddress : 'প্রযোজ্য নয়',
+                    staff: typeof tx.staff === 'string' ? tx.staff : 'Abu bokor',
+                    amount: amt,
+                    paymentType: paymentType,
+                    printPages: Number(tx.printPages) || 0,
+                    photocopyPages: Number(tx.photocopyPages) || 0,
+                    damagedPages: Number(tx.damagedPages) || 0
+                });
+            });
+            return validList;
+        }
+
+        function normalizeAdvances(rawData) {
+            if (!Array.isArray(rawData)) return [];
+            let valid = [];
+            rawData.forEach(adv => {
+                if (!adv || typeof adv !== 'object') return;
+                const amt = Number(adv.amount);
+                if (!Number.isFinite(amt) || amt <= 0) return;
+                const dateStr = String(adv.date || '').trim();
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return;
+                const name = String(adv.custName || '').trim();
+                if (!name) return;
+
+                valid.push({
+                    id: adv.id || ('adv_' + Date.now() + '_' + Math.random()),
+                    type: 'AdvancePay',
+                    date: dateStr,
+                    time: adv.time || '',
+                    custName: name,
+                    custPhone: adv.custPhone || 'প্রযোজ্য নয়',
+                    custAddress: adv.custAddress || 'প্রযোজ্য নয়',
+                    staff: adv.staff || 'Abu bokor',
+                    amount: amt,
+                    details: adv.details || 'অগ্রিম টাকা জমা',
+                    createdAt: adv.createdAt || Date.now()
+                });
+            });
+            return valid;
+        }
+
+        function normalizeTransfers(rawData) {
+            if (!Array.isArray(rawData)) return [];
+            let valid = [];
+            rawData.forEach(tr => {
+                if (!tr || typeof tr !== 'object') return;
+                const amt = Number(tr.amount);
+                if (!Number.isFinite(amt) || amt <= 0) return;
+                const dateStr = String(tr.date || '').trim();
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return;
+
+                valid.push({
+                    id: tr.id || ('trans_' + Date.now() + '_' + Math.random()),
+                    type: 'AdvanceTransfer',
+                    advanceId: tr.advanceId || '',
+                    custName: tr.custName || 'গ্রাহক',
+                    custPhone: tr.custPhone || '',
+                    amount: amt,
+                    date: dateStr,
+                    time: tr.time || '',
+                    details: tr.details || 'মূল ক্যাশে ট্রান্সফার'
+                });
+            });
+            return valid;
+        }
+
+        // Helper: Bangladesh Local Date String
+        function getLocalDateString() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // Initialize App & Login Check & Fetch Data from Supabase
+        window.onload = function() { checkLoginState(); };
+
+        function txToDb(tx){
+            return {id:String(tx.id),date:tx.date,time:tx.time||'',category:tx.category||'অন্যান্য',details:tx.details||'',cust_name:tx.custName||'সাধারণ গ্রাহক',cust_phone:tx.custPhone||'প্রযোজ্য নয়',cust_address:tx.custAddress||'প্রযোজ্য নয়',staff:tx.staff||'Abu bokor',amount:Number(tx.amount),payment_type:tx.paymentType,print_pages:Number(tx.printPages)||0,photocopy_pages:Number(tx.photocopyPages)||0,damaged_pages:Number(tx.damagedPages)||0};
+        }
+        function dbToTx(r){
+            return {id:String(r.id),date:String(r.date||''),time:r.time||'',category:r.category||'অন্যান্য',details:r.details||'',custName:r.cust_name||'সাধারণ গ্রাহক',custPhone:r.cust_phone||'প্রযোজ্য নয়',custAddress:r.cust_address||'প্রযোজ্য নয়',staff:r.staff||'Abu bokor',amount:Number(r.amount)||0,paymentType:r.payment_type||'Paid',printPages:Number(r.print_pages)||0,photocopyPages:Number(r.photocopy_pages)||0,damagedPages:Number(r.damaged_pages)||0};
+        }
+        function advToDb(a){ return {id:String(a.id),date:a.date,time:a.time||'',cust_name:a.custName,cust_phone:a.custPhone||'',cust_address:a.custAddress||'',staff:a.staff||'Abu bokor',amount:Number(a.amount),details:a.details||'অগ্রিম টাকা জমা'}; }
+        function dbToAdv(r){ return {id:String(r.id),type:'AdvancePay',date:String(r.date||''),time:r.time||'',custName:r.cust_name||'',custPhone:r.cust_phone||'প্রযোজ্য নয়',custAddress:r.cust_address||'প্রযোজ্য নয়',staff:r.staff||'Abu bokor',amount:Number(r.amount)||0,details:r.details||'অগ্রিম টাকা জমা'}; }
+        function trToDb(t){ return {id:String(t.id),advance_id:String(t.advanceId),cust_name:t.custName||'গ্রাহক',cust_phone:t.custPhone||'',amount:Number(t.amount),date:t.date,time:t.time||'',details:t.details||'মূল ক্যাশে ট্রান্সফার'}; }
+        function dbToTr(r){ return {id:String(r.id),type:'AdvanceTransfer',advanceId:String(r.advance_id||''),custName:r.cust_name||'গ্রাহক',custPhone:r.cust_phone||'',amount:Number(r.amount)||0,date:String(r.date||''),time:r.time||'',details:r.details||'মূল ক্যাশে ট্রান্সফার'}; }
+
+        async function fetchGoogleSheetData() {
             loadLocalDataSafely();
-            const localTx = [...transactions];
-            const localAdv = [...advancePayments];
-            const localTr = [...advanceTransfers];
             updateSyncStatus('Syncing...', 'bg-blue-800 text-blue-200');
             try {
                 const [txRes, advRes, trRes] = await Promise.all([
-                    supabaseClient.from('transactions').select('*'),
-                    supabaseClient.from('advance_payments').select('*'),
-                    supabaseClient.from('advance_transfers').select('*')
+                    supabaseClient.from('transactions').select('*').order('created_at',{ascending:false}),
+                    supabaseClient.from('advance_payments').select('*').order('created_at',{ascending:false}),
+                    supabaseClient.from('advance_transfers').select('*').order('created_at',{ascending:false})
                 ]);
                 if(txRes.error) throw txRes.error;
                 if(advRes.error) throw advRes.error;
                 if(trRes.error) throw trRes.error;
-
-                let remoteTx = normalizeTransactions((txRes.data||[]).map(mapTransactionRow));
-                let remoteAdv = normalizeAdvances((advRes.data||[]).map(mapAdvanceRow));
-                let remoteTr = normalizeTransfers((trRes.data||[]).map(mapTransferRow));
-
-                // IMPORTANT: migrate/merge the old Google Sheet once, even when Supabase already
-                // contains a few records. This prevents the new online version from showing only
-                // the newly-created rows while the old history remains elsewhere.
-                let legacyTx = [];
-                if (!localStorage.getItem('legacy_google_imported_v2')) {
-                    try {
-                        const resp = await fetch(GOOGLE_SCRIPT_URL);
-                        if(resp.ok) {
-                            const data = await resp.json();
-                            legacyTx = normalizeTransactions(Array.isArray(data) ? data : []);
-                        }
-                    } catch(e) { console.warn('Legacy Google import skipped:', e); }
-                    localStorage.setItem('legacy_google_imported_v2','1');
+                const remoteTx = normalizeTransactions((txRes.data||[]).map(dbToTx));
+                const remoteAdv = normalizeAdvances((advRes.data||[]).map(dbToAdv));
+                const remoteTr = normalizeTransfers((trRes.data||[]).map(dbToTr));
+                // Supabase is canonical once it contains data. Local cache is only used when remote is empty.
+                if(remoteTx.length || remoteAdv.length || remoteTr.length || !transactions.length){
+                    transactions=remoteTx; advancePayments=remoteAdv; advanceTransfers=remoteTr;
                 }
-
-                // Merge by ID: remote is preferred when the same ID exists; local/legacy-only
-                // rows are retained and then uploaded. This restores the old Dashboard history
-                // without overwriting newer online edits.
-                const mergeById = (...lists) => {
-                    const map = new Map();
-                    for (const list of lists) for (const row of list) if(row && row.id) map.set(String(row.id), row);
-                    return [...map.values()];
-                };
-                const mergedTx = mergeById(localTx, legacyTx, remoteTx);
-                const mergedAdv = mergeById(localAdv, remoteAdv);
-                const mergedTr = mergeById(localTr, remoteTr);
-
-                // Push only records that are missing remotely. Existing remote rows remain canonical.
-                const remoteIds = new Set(remoteTx.map(x=>String(x.id)));
-                const missingTx = mergedTx.filter(x=>!remoteIds.has(String(x.id)));
-                if(missingTx.length) {
-                    const {error}=await supabaseClient.from('transactions').upsert(missingTx.map(txToRow),{onConflict:'id'});
-                    if(error) throw error;
-                }
-                const remoteAdvIds = new Set(remoteAdv.map(x=>String(x.id)));
-                const missingAdv = mergedAdv.filter(x=>!remoteAdvIds.has(String(x.id)));
-                if(missingAdv.length) {
-                    const {error}=await supabaseClient.from('advance_payments').upsert(missingAdv.map(advToRow),{onConflict:'id'});
-                    if(error) throw error;
-                }
-                const validMergedTr = mergedTr.filter(t=>mergedAdv.some(a=>String(a.id)===String(t.advanceId)));
-                const remoteTrIds = new Set(remoteTr.map(x=>String(x.id)));
-                const missingTr = validMergedTr.filter(x=>!remoteTrIds.has(String(x.id)));
-                if(missingTr.length) {
-                    const {error}=await supabaseClient.from('advance_transfers').upsert(missingTr.map(transferToRow),{onConflict:'id'});
-                    if(error) throw error;
-                }
-
-                transactions=normalizeTransactions(mergedTx);
-                advancePayments=normalizeAdvances(mergedAdv);
-                advanceTransfers=normalizeTransfers(validMergedTr);
                 saveToLocalStorageQuiet();
                 updateSyncStatus('Online • Synced','bg-emerald-600 text-white');
             } catch(e) {
-                console.error('Supabase load failed:',e);
-                // Never throw away a valid local cache on a network/RLS failure.
-                transactions=localTx; advancePayments=localAdv; advanceTransfers=localTr;
-                saveToLocalStorageQuiet();
-                updateSyncStatus('Offline • Local Data','bg-amber-600 text-white');
+                console.error('Supabase load failed:', e);
+                updateSyncStatus('Offline • Local','bg-amber-600 text-white');
             }
             initializeAppContent();
         }
 
-        function syncToSupabase(kind, recordOrRecords) {
+        function syncToGoogleSheet() {
             saveToLocalStorageQuiet();
             updateSyncStatus('Syncing...', 'bg-blue-800 text-blue-200');
+            const txSnapshot=transactions.map(tx=>({...tx}));
+            const advSnapshot=advancePayments.map(a=>({...a}));
+            const trSnapshot=advanceTransfers.map(t=>({...t}));
             syncQueue = syncQueue.then(async()=>{
-                if(!currentUser) return;
-                if(kind){
-                    const map={transactions:['transactions',txToRow],advance_payments:['advance_payments',advToRow],advance_transfers:['advance_transfers',transferToRow]};
-                    const cfg=map[kind];
-                    if(!cfg) throw new Error('Unknown sync target');
-                    const records=Array.isArray(recordOrRecords)?recordOrRecords:[recordOrRecords];
-                    const {error}=await supabaseClient.from(cfg[0]).upsert(records.map(cfg[1]),{onConflict:'id'});
-                    if(error) throw error;
-                } else {
-                    const a=await supabaseClient.from('transactions').upsert(transactions.map(txToRow),{onConflict:'id'}); if(a.error) throw a.error;
-                    const b=await supabaseClient.from('advance_payments').upsert(advancePayments.map(advToRow),{onConflict:'id'}); if(b.error) throw b.error;
-                    const c=await supabaseClient.from('advance_transfers').upsert(advanceTransfers.map(transferToRow),{onConflict:'id'}); if(c.error) throw c.error;
-                }
-                updateSyncStatus('Online • Synced','bg-emerald-600 text-white');
-            }).catch(e=>{console.error('Supabase sync failed:',e);updateSyncStatus('Sync Failed','bg-red-600 text-white');});
+                try{
+                    if(txSnapshot.length) { const {error}=await supabaseClient.from('transactions').upsert(txSnapshot.map(txToDb),{onConflict:'id'}); if(error) throw error; }
+                    if(advSnapshot.length) { const {error}=await supabaseClient.from('advance_payments').upsert(advSnapshot.map(advToDb),{onConflict:'id'}); if(error) throw error; }
+                    if(trSnapshot.length) { const {error}=await supabaseClient.from('advance_transfers').upsert(trSnapshot.map(trToDb),{onConflict:'id'}); if(error) throw error; }
+                    updateSyncStatus('Online • Synced','bg-emerald-600 text-white');
+                }catch(e){ console.error('Supabase sync failed:',e); updateSyncStatus('Sync Failed','bg-red-600 text-white'); }
+            });
             return syncQueue;
         }
-        async function deleteRemote(table,id){
-            const targetId=String(id);
-            // Wait for any earlier queued upsert to finish first. Otherwise an in-flight
-            // sync can finish AFTER the delete and silently recreate the record.
-            await syncQueue;
-            const {error}=await supabaseClient.from(table).delete().eq('id',targetId);
+
+        async function deleteRemoteTransaction(id){
+            const target=String(id);
+            const {error}=await supabaseClient.from('transactions').delete().eq('id',target);
             if(error) throw error;
-            // Verify that the row is really gone from the online database.
-            const {data:remaining,error:verifyError}=await supabaseClient.from(table).select('id').eq('id',targetId).limit(1);
+            const {data:remaining,error:verifyError}=await supabaseClient.from('transactions').select('id').eq('id',target).limit(1);
             if(verifyError) throw verifyError;
-            if(Array.isArray(remaining) && remaining.length>0) throw new Error('ডাটাবেস থেকে এন্ট্রি মুছে ফেলা যায়নি। RLS/Delete Policy পরীক্ষা করুন।');
+            if(Array.isArray(remaining) && remaining.length) throw new Error('ডাটাবেস থেকে এন্ট্রি মুছে ফেলা যায়নি।');
         }
         async function clearRemoteData(){
             for(const table of ['advance_transfers','advance_payments','transactions']){
@@ -1256,107 +1253,570 @@
                 if(error) throw error;
             }
         }
-        function syncToGoogleSheet(){ return syncToSupabase(); }
 
-        window.onload = function(){ checkLoginState(); };
-        async function checkLoginState(){
-            const {data:{session}}=await supabaseClient.auth.getSession();
-            currentUser=session?.user||null;
-            if(currentUser){
-                document.getElementById('loginOverlay').classList.add('hidden');
-                document.getElementById('mainAppWrapper').classList.remove('hidden');
-                document.getElementById('mainAppWrapper').classList.add('flex');
-                await loadSupabaseData();
-            } else {
-                document.getElementById('loginOverlay').classList.remove('hidden');
-                document.getElementById('mainAppWrapper').classList.add('hidden');
-            }
+        function checkLoginState() {
+            supabaseClient.auth.getSession().then(({data})=>{
+                const logged=!!data.session;
+                if(logged){
+                    localStorage.setItem('rajshahi_air_loggedin','true');
+                    document.getElementById('loginOverlay').classList.add('hidden');
+                    document.getElementById('mainAppWrapper').classList.remove('hidden');
+                    document.getElementById('mainAppWrapper').classList.add('flex');
+                    fetchGoogleSheetData();
+                }else{
+                    localStorage.removeItem('rajshahi_air_loggedin');
+                    document.getElementById('loginOverlay').classList.remove('hidden');
+                    document.getElementById('mainAppWrapper').classList.add('hidden');
+                }
+            });
         }
-        supabaseClient.auth.onAuthStateChange((_event,session)=>{
-            currentUser=session?.user||null;
-            if(session){
-                setTimeout(()=>loadSupabaseData(),0);
-            } else {
-                document.getElementById('loginOverlay').classList.remove('hidden');
-                document.getElementById('mainAppWrapper').classList.add('hidden');
-            }
-        });
-        async function handleLogin(event){
+
+        async function handleLogin(event) {
             event.preventDefault();
             const email=document.getElementById('loginEmail').value.trim();
             const password=document.getElementById('loginPassword').value;
-            const btn=event.submitter; if(btn) btn.disabled=true;
             const {error}=await supabaseClient.auth.signInWithPassword({email,password});
-            if(error) alert('লগইন ব্যর্থ: '+error.message);
-            if(btn) btn.disabled=false;
+            if(error){ alert('ভুল ইমেইল বা পাসওয়ার্ড! '+error.message); return; }
+            checkLoginState();
         }
-        async function handleLogout(){ await supabaseClient.auth.signOut(); }
-        function openRecoveryModal(){
-            document.getElementById('recoveryCodeInput').value='';
+
+        async function handleLogout() {
+            await supabaseClient.auth.signOut();
+            localStorage.removeItem('rajshahi_air_loggedin');
+            checkLoginState();
+        }
+
+        function openRecoveryModal() {
+            document.getElementById('recoveryCodeInput').value = '';
             document.getElementById('recoveryResultBox').classList.add('hidden');
+            document.getElementById('rocketMsgBox').classList.add('hidden');
             document.getElementById('recoveryModal').classList.remove('hidden');
         }
-        function closeRecoveryModal(){ document.getElementById('recoveryModal').classList.add('hidden'); }
-        async function verifyRecoveryCode(){
-            const email=document.getElementById('recoveryCodeInput').value.trim();
-            if(!email) return alert('ইমেইল দিন।');
-            const {error}=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+window.location.pathname});
-            if(error) return alert('রিসেট লিংক পাঠানো যায়নি: '+error.message);
-            document.getElementById('recoveryResultBox').classList.remove('hidden');
-        }
-        function triggerRocketMessage(){}
 
-        function initializeAppContent(){
+        function closeRecoveryModal() {
+            document.getElementById('recoveryModal').classList.add('hidden');
+        }
+
+        function verifyRecoveryCode() {
+            const code = document.getElementById('recoveryCodeInput').value.trim();
+            if (code === '017718100090') {
+                document.getElementById('recEmail').innerText = 'rattraining5@gmail.com';
+                document.getElementById('recPass').innerText = 'Rat@9293';
+                document.getElementById('recoveryResultBox').classList.remove('hidden');
+            } else {
+                alert('ভুল রিকভারি কোড বা নম্বর!');
+            }
+        }
+
+        function triggerRocketMessage() {
+            document.getElementById('rocketMsgBox').classList.remove('hidden');
+        }
+
+        function initializeAppContent() {
             updateCurrentDate();
-            const driveInput=document.getElementById('gdriveLink');
-            if(driveInput){driveInput.value=savedDriveLink;driveInput.oninput=function(){savedDriveLink=this.value;saveToLocalStorageQuiet();};}
-            const today=getLocalDateString();
-            ['filterStartDate','filterEndDate','expenseStartDate','expenseEndDate'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=today;});
-            refreshDashboard(); filterReports(); populateDueCustomers(); refreshExpenseTable(); refreshAdvancePayUI();
-        }
-        function updateCurrentDate(){ const el=document.getElementById('currentDateDisplay'); if(el) el.innerText=new Date().toLocaleDateString('bn-BD',{year:'numeric',month:'long',day:'numeric',weekday:'long',timeZone:'Asia/Dhaka'}); }
-        function switchTab(tabId){
-            document.querySelectorAll('.tab-content').forEach(el=>el.classList.add('hidden'));
-            document.querySelectorAll('.tab-btn').forEach(el=>{el.classList.remove('bg-blue-600','text-white','shadow-sm');el.classList.add('text-slate-600','hover:bg-slate-100');});
-            const tab=document.getElementById(`tab-${tabId}`); if(tab)tab.classList.remove('hidden');
-            const btn=document.getElementById(`nav-${tabId}`); if(btn){btn.classList.remove('text-slate-600','hover:bg-slate-100');btn.classList.add('bg-blue-600','text-white','shadow-sm');}
-            if(tabId==='dueCollection')populateDueCustomers(); if(tabId==='expense')refreshExpenseTable(); if(tabId==='reports')filterReports(); if(tabId==='advancePay')refreshAdvancePayUI();
-        }
-        function addProductRow(){const c=document.getElementById('productListContainer');const r=document.createElement('div');r.className='flex items-center space-x-2 product-row';r.innerHTML=`<input type="text" placeholder="প্রোডাক্টের নাম" required class="flex-grow border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none prod-name"><input type="number" placeholder="দাম (৳)" min="1" required class="w-32 border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none prod-price"><button type="button" onclick="removeProductRow(this)" class="bg-red-100 text-red-600 hover:bg-red-200 px-3 py-2.5 rounded-lg transition remove-btn"><i class="fa-solid fa-trash"></i></button>`;c.appendChild(r);updateRemoveButtons();}
-        function removeProductRow(btn){btn.closest('.product-row').remove();updateRemoveButtons();}
-        function updateRemoveButtons(){const rows=document.querySelectorAll('.product-row');rows.forEach(r=>{const b=r.querySelector('.remove-btn');if(rows.length>1)b.classList.remove('hidden');else b.classList.add('hidden');});}
+            const driveInput = document.getElementById('gdriveLink');
+            if(driveInput) {
+                driveInput.value = savedDriveLink;
+                driveInput.oninput = function() {
+                    savedDriveLink = this.value;
+                    localStorage.setItem('rajshahi_air_gdrive', savedDriveLink);
+                };
+            }
 
-        // General transaction handler
-        function handleTransaction(event,type){
+            const todayStr = getLocalDateString();
+            document.getElementById('filterStartDate').value = todayStr;
+            document.getElementById('filterEndDate').value = todayStr;
+            document.getElementById('expenseStartDate').value = todayStr;
+            document.getElementById('expenseEndDate').value = todayStr;
+
+            refreshDashboard();
+            filterReports(); 
+            populateDueCustomers();
+            refreshExpenseTable();
+            refreshAdvancePayUI();
+        }
+
+        function updateCurrentDate() {
+            const now = new Date();
+            const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+            document.getElementById('currentDateDisplay').innerText = now.toLocaleDateString('bn-BD', options);
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('bg-blue-600', 'text-white', 'shadow-sm');
+                el.classList.add('text-slate-600', 'hover:bg-slate-100');
+            });
+
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`nav-${tabId}`);
+            if(activeBtn) {
+                activeBtn.classList.remove('text-slate-600', 'hover:bg-slate-100');
+                activeBtn.classList.add('bg-blue-600', 'text-white', 'shadow-sm');
+            }
+
+            if(tabId === 'dueCollection') populateDueCustomers();
+            if(tabId === 'expense') refreshExpenseTable();
+            if(tabId === 'reports') filterReports();
+            if(tabId === 'advancePay') refreshAdvancePayUI();
+        }
+
+        // Product Row Management
+        function addProductRow() {
+            const container = document.getElementById('productListContainer');
+            const newRow = document.createElement('div');
+            newRow.className = 'flex items-center space-x-2 product-row';
+            newRow.innerHTML = `
+                <input type="text" placeholder="প্রোডাক্টের নাম" required class="flex-grow border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none prod-name">
+                <input type="number" placeholder="দাম (৳)" min="1" required class="w-32 border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none prod-price">
+                <button type="button" onclick="removeProductRow(this)" class="bg-red-100 text-red-600 hover:bg-red-200 px-3 py-2.5 rounded-lg transition hidden remove-btn">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            `;
+            container.appendChild(newRow);
+            updateRemoveButtons();
+        }
+
+        function removeProductRow(btn) {
+            btn.closest('.product-row').remove();
+            updateRemoveButtons();
+        }
+
+        function updateRemoveButtons() {
+            const rows = document.querySelectorAll('.product-row');
+            rows.forEach((row) => {
+                const removeBtn = row.querySelector('.remove-btn');
+                if (rows.length > 1) removeBtn.classList.remove('hidden');
+                else removeBtn.classList.add('hidden');
+            });
+        }
+
+        // General Transactions Handler
+        function handleTransaction(event, type) {
             event.preventDefault();
-            const staff=document.getElementById('globalStaff').value, dateStr=getLocalDateString(), timeStr=getBanglaTime();
-            let details='',amount=0,paymentType='Paid',custName='',custPhone='',custAddress='',printPagesCount=0,photocopyPagesCount=0,damagedPagesCount=0;
-            if(type==='photocopy'){photocopyPagesCount=parseInt(document.getElementById('pcPages').value)||0;damagedPagesCount=parseInt(document.getElementById('pcDamaged').value)||0;amount=parseFloat(document.getElementById('pcAmount').value);paymentType=document.getElementById('pcPaymentType').value;details=`ফটো কপি: ${photocopyPagesCount} পেজ (নষ্ট: ${damagedPagesCount} পেজ)`;custName=document.getElementById('pcCustName').value.trim();custPhone=document.getElementById('pcCustPhone').value.trim();custAddress=document.getElementById('pcCustAddress').value.trim();}
-            else if(type==='print'){printPagesCount=parseInt(document.getElementById('printPages').value)||0;const printType=document.getElementById('printType').value;damagedPagesCount=parseInt(document.getElementById('printDamaged').value)||0;amount=parseFloat(document.getElementById('printAmount').value);paymentType=document.getElementById('printPaymentType').value;details=`প্রিন্ট [${printType}]: ${printPagesCount} পেজ (নষ্ট: ${damagedPagesCount} পেজ)`;custName=document.getElementById('printCustName').value.trim();custPhone=document.getElementById('printCustPhone').value.trim();custAddress=document.getElementById('printCustAddress').value.trim();}
-            else if(type==='products'){const rows=document.querySelectorAll('.product-row');let sum=0,parts=[];for(const row of rows){const n=row.querySelector('.prod-name').value.trim(),p=parseFloat(row.querySelector('.prod-price').value);if(!n||!Number.isFinite(p)||p<=0)return alert('সব প্রোডাক্টের নাম এবং সঠিক দাম দিন।');sum+=p;parts.push(`${n} (৳${p})`);}amount=sum;paymentType=document.getElementById('prodPaymentType').value;details=`প্রোডাক্ট বিক্রি: ${parts.join(', ')}`;custName=document.getElementById('prodCustName').value.trim();custPhone=document.getElementById('prodCustPhone').value.trim();custAddress=document.getElementById('prodCustAddress').value.trim();}
-            else if(type==='banking'){const operator=document.getElementById('bankOperator').value,medium=document.getElementById('bankMedium').value;amount=parseFloat(document.getElementById('bankAmount').value);paymentType=document.getElementById('bankPaymentType').value;details=`মোবাইল ব্যাংকিং [${operator} - ${medium}]`;custName=document.getElementById('bankCustName').value.trim();custPhone=document.getElementById('bankCustPhone').value.trim();custAddress=document.getElementById('bankCustAddress').value.trim();}
-            if(!Number.isFinite(amount)||amount<=0)return alert('টাকার পরিমাণ শূন্য বা নেগেটিভ হতে পারবে না।');
-            if(paymentType==='Due'&&(!custName||!custPhone))return alert('বাকি রাখতে হলে গ্রাহকের নাম এবং ফোন নম্বর অবশ্যই দিতে হবে!');
-            const tx={id:makeId('tx'),date:dateStr,time:timeStr,category:getCategoryName(type),details,custName:custName||'সাধারণ গ্রাহক',custPhone:custPhone||'প্রযোজ্য নয়',custAddress:custAddress||'প্রযোজ্য নয়',staff,amount:Math.round(amount*100)/100,paymentType,printPages:printPagesCount,photocopyPages:photocopyPagesCount,damagedPages:damagedPagesCount};
-            transactions.unshift(tx); syncToSupabase('transactions', tx); refreshDashboard(); filterReports(); populateDueCustomers();
-            const forms={photocopy:'formPhotocopy',print:'formPrint,',products:'formProducts',banking:'formBanking'};
-            if(type==='photocopy')document.getElementById('formPhotocopy').reset();
-            else if(type==='print')document.getElementById('formPrint').reset();
-            else if(type==='products'){document.getElementById('formProducts').reset();document.getElementById('productListContainer').innerHTML=`<div class="flex items-center space-x-2 product-row"><input type="text" placeholder="প্রোডাক্টের নাম" required class="flex-grow border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none prod-name"><input type="number" placeholder="দাম (৳)" min="1" required class="w-32 border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none prod-price"><button type="button" onclick="removeProductRow(this)" class="bg-red-100 text-red-600 hover:bg-red-200 px-3 py-2.5 rounded-lg transition hidden remove-btn"><i class="fa-solid fa-trash"></i></button></div>`;}
-            else if(type==='banking')document.getElementById('formBanking').reset();
+            const staff = document.getElementById('globalStaff').value;
+            const dateStr = getLocalDateString();
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' });
+
+            let details = '';
+            let amount = 0;
+            let paymentType = 'Paid';
+            let custName = '', custPhone = '', custAddress = '';
+            let printPagesCount = 0;
+            let photocopyPagesCount = 0;
+            let damagedPagesCount = 0;
+
+            if (type === 'photocopy') {
+                photocopyPagesCount = parseInt(document.getElementById('pcPages').value) || 0;
+                damagedPagesCount = parseInt(document.getElementById('pcDamaged').value) || 0;
+                amount = parseFloat(document.getElementById('pcAmount').value);
+                paymentType = document.getElementById('pcPaymentType').value;
+                details = `ফটো কপি: ${photocopyPagesCount} পেজ (নষ্ট: ${damagedPagesCount} পেজ)`;
+                custName = document.getElementById('pcCustName').value.trim();
+                custPhone = document.getElementById('pcCustPhone').value.trim();
+                custAddress = document.getElementById('pcCustAddress').value.trim();
+            } 
+            else if (type === 'print') {
+                printPagesCount = parseInt(document.getElementById('printPages').value) || 0;
+                const printType = document.getElementById('printType').value;
+                damagedPagesCount = parseInt(document.getElementById('printDamaged').value) || 0;
+                amount = parseFloat(document.getElementById('printAmount').value);
+                paymentType = document.getElementById('printPaymentType').value;
+                details = `প্রিন্ট [${printType}]: ${printPagesCount} পেজ (নষ্ট: ${damagedPagesCount} পেজ)`;
+                custName = document.getElementById('printCustName').value.trim();
+                custPhone = document.getElementById('printCustPhone').value.trim();
+                custAddress = document.getElementById('printCustAddress').value.trim();
+            } 
+            else if (type === 'products') {
+                const rows = document.querySelectorAll('.product-row');
+                let prodSummary = [];
+                for (let row of rows) {
+                    const pName = row.querySelector('.prod-name').value.trim();
+                    const pPrice = parseFloat(row.querySelector('.prod-price').value) || 0;
+                    if (!pName || pPrice <= 0) {
+                        alert('সব প্রোডাক্টের নাম এবং সঠিক দাম দিন।');
+                        return;
+                    }
+                    amount += pPrice;
+                    prodSummary.push(`${pName} (৳${pPrice})`);
+                }
+                paymentType = document.getElementById('prodPaymentType').value;
+                details = `প্রোডাক্ট বিক্রি: ${prodSummary.join(', ')}`;
+                custName = document.getElementById('prodCustName').value.trim();
+                custPhone = document.getElementById('prodCustPhone').value.trim();
+                custAddress = document.getElementById('prodCustAddress').value.trim();
+            }
+            else if (type === 'banking') {
+                const operator = document.getElementById('bankOperator').value;
+                const medium = document.getElementById('bankMedium').value;
+                amount = parseFloat(document.getElementById('bankAmount').value);
+                paymentType = document.getElementById('bankPaymentType').value;
+                details = `মোবাইল ব্যাংকিং [${operator} - ${medium}]`;
+                custName = document.getElementById('bankCustName').value.trim();
+                custPhone = document.getElementById('bankCustPhone').value.trim();
+                custAddress = document.getElementById('bankCustAddress').value.trim();
+            }
+
+            if (!Number.isFinite(amount) || amount <= 0) {
+                alert('টাকার পরিমাণ শূন্য বা নেগেটিভ হতে পারবে না। সঠিক পরিমাণ দিন।');
+                return;
+            }
+
+            if (paymentType === 'Due' && (!custName || !custPhone)) {
+                alert('বাকি রাখতে হলে গ্রাহকের নাম এবং ফোন নম্বর অবশ্যই দিতে হবে!');
+                return;
+            }
+
+            const transactionObj = {
+                id: Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                date: dateStr,
+                time: timeStr,
+                category: getCategoryName(type),
+                details: details,
+                custName: custName || 'সাধারণ গ্রাহক',
+                custPhone: custPhone || 'প্রযোজ্য নয়',
+                custAddress: custAddress || 'প্রযোজ্য নয়',
+                staff: staff,
+                amount: Number(amount) || 0,
+                paymentType: paymentType,
+                printPages: printPagesCount,
+                photocopyPages: photocopyPagesCount,
+                damagedPages: damagedPagesCount
+            };
+
+            transactions.unshift(transactionObj);
+            syncToGoogleSheet();
+            refreshDashboard();
+            filterReports();
+            populateDueCustomers();
+
+            if (type === 'photocopy') document.getElementById('formPhotocopy').reset();
+            else if (type === 'print') document.getElementById('formPrint').reset();
+            else if (type === 'products') {
+                document.getElementById('formProducts').reset();
+                document.getElementById('productListContainer').innerHTML = `
+                    <div class="flex items-center space-x-2 product-row">
+                        <input type="text" placeholder="প্রোডাক্টের নাম" required class="flex-grow border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none prod-name">
+                        <input type="number" placeholder="দাম (৳)" min="1" required class="w-32 border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none prod-price">
+                        <button type="button" onclick="removeProductRow(this)" class="bg-red-100 text-red-600 hover:bg-red-200 px-3 py-2.5 rounded-lg transition hidden remove-btn">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+            }
+            else if (type === 'banking') document.getElementById('formBanking').reset();
+
             alert('সফলভাবে এন্ট্রি সংরক্ষিত হয়েছে!');
         }
-        function handleExpense(event){
-            event.preventDefault(); const amount=parseFloat(document.getElementById('expenseAmount').value),reason=document.getElementById('expenseReason').value.trim(),note=document.getElementById('expenseNote').value.trim();
-            if(!Number.isFinite(amount)||amount<=0)return alert('খরচের পরিমাণ সঠিক দিন.');
-            const expenseObj={id:makeId('tx'),date:getLocalDateString(),time:getBanglaTime(),category:'দোকানের খরচ',details:`খরচ: ${reason} ${note?'('+note+')':''}`,custName:'দোকান খরচ',custPhone:'-',custAddress:'-',staff:document.getElementById('globalStaff').value,amount:Math.round(amount*100)/100,paymentType:'Expense',printPages:0,photocopyPages:0,damagedPages:0};
+
+        // Expense Handler
+        function handleExpense(event) {
+            event.preventDefault();
+            const staff = document.getElementById('globalStaff').value;
+            const dateStr = getLocalDateString();
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' });
+
+            const reason = document.getElementById('expenseReason').value.trim();
+            const amount = parseFloat(document.getElementById('expenseAmount').value);
+            const note = document.getElementById('expenseNote').value.trim();
+
+            if (!Number.isFinite(amount) || amount <= 0) {
+                alert('খরচের পরিমাণ শূন্য বা নেগেটিভ হতে পারবে না। সঠিক পরিমাণ দিন।');
+                return;
+            }
+
+            const expenseObj = {
+                id: Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                date: dateStr,
+                time: timeStr,
+                category: 'দোকানের খরচ',
+                details: `খরচ: ${reason} ${note ? '('+note+')' : ''}`,
+                custName: 'দোকান খরচ',
+                custPhone: '-',
+                custAddress: '-',
+                staff: staff,
+                amount: Number(amount) || 0,
+                paymentType: 'Expense',
+                printPages: 0,
+                photocopyPages: 0,
+                damagedPages: 0
+            };
+
             transactions.unshift(expenseObj);
-            syncToSupabase('transactions', expenseObj); refreshDashboard(); filterReports(); refreshExpenseTable(); document.getElementById('formExpense').reset(); alert('দোকানের খরচ সফলভাবে এন্ট্রি হয়েছে!');
+            syncToGoogleSheet();
+            refreshDashboard();
+            filterReports();
+            refreshExpenseTable();
+            document.getElementById('formExpense').reset();
+            alert('দোকানের খরচ সফলভাবে এন্ট্রি হয়েছে!');
         }
-        function getCategoryName(type){switch(type){case 'photocopy':return 'ফটো কপি';case 'print':return 'প্রিন্ট';case 'products':return 'অন্যান্য প্রোডাক্ট';case 'banking':return 'মোবাইল ব্যাংকিং';default:return 'অন্যান্য';}}
 
-        // Due / expense / dashboard / report functions are preserved from the audited app below.
+        function getCategoryName(type) {
+            switch(type) {
+                case 'photocopy': return 'ফটো কপি';
+                case 'print': return 'প্রিন্ট';
+                case 'products': return 'অন্যান্য প্রোডাক্ট';
+                case 'banking': return 'মোবাইল ব্যাংকিং';
+                case 'expense': return 'দোকানের খরচ';
+                case 'due-collection': return 'বাকি আদায়';
+                default: return type;
+            }
+        }
 
+        // ================= ADVANCE PAY FEATURE LOGIC =================
+        function handleAdvancePaySubmit(event) {
+            event.preventDefault();
+            const staff = document.getElementById('globalStaff').value;
+            const dateStr = getLocalDateString();
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' });
+
+            const custName = document.getElementById('advCustName').value.trim();
+            const custPhone = document.getElementById('advCustPhone').value.trim() || 'প্রযোজ্য নয়';
+            const custAddress = document.getElementById('advCustAddress').value.trim() || 'প্রযোজ্য নয়';
+            const amount = parseFloat(document.getElementById('advAmount').value);
+            const details = document.getElementById('advDetails').value.trim() || 'অগ্রিম টাকা গ্রহণ';
+
+            if (!custName || !Number.isFinite(amount) || amount <= 0) {
+                alert('গ্রাহকের নাম এবং সঠিক অগ্রিম পরিমাণ (শূন্য বা নেগেটিভ নয়) দিন।');
+                return;
+            }
+
+            const advObj = {
+                id: 'adv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                type: 'AdvancePay',
+                date: dateStr,
+                time: timeStr,
+                custName: custName,
+                custPhone: custPhone,
+                custAddress: custAddress,
+                staff: staff,
+                amount: amount,
+                details: details,
+                createdAt: Date.now()
+            };
+
+            advancePayments.unshift(advObj);
+            saveToLocalStorageQuiet();
+            refreshAdvancePayUI();
+            refreshDashboard();
+            document.getElementById('formAdvancePay').reset();
+            alert('গ্রাহকের অগ্রিম টাকা সফলভাবে জমা হয়েছে!');
+        }
+
+        function getTotalAdvanceBalance() {
+            let totalAdv = 0;
+            advancePayments.forEach(a => totalAdv += (Number(a.amount) || 0));
+            let totalTrans = 0;
+            advanceTransfers.forEach(t => totalTrans += (Number(t.amount) || 0));
+            return Math.max(0, totalAdv - totalTrans);
+        }
+
+        function getCustomerAdvanceDetails(phoneOrName) {
+            let advances = advancePayments.filter(a => (a.custPhone && a.custPhone === phoneOrName) || (a.custName === phoneOrName));
+            let transfers = advanceTransfers.filter(t => (t.custPhone && t.custPhone === phoneOrName) || (t.custName === phoneOrName));
+            
+            let totalAdv = advances.reduce((sum, a) => sum + (Number(a.amount) || 0), 0);
+            let totalTrans = transfers.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+            let remaining = Math.max(0, totalAdv - totalTrans);
+
+            return { totalAdv, totalTrans, remaining, advances, transfers };
+        }
+
+        function refreshAdvancePayUI() {
+            let custMap = new Map();
+            advancePayments.forEach(a => {
+                let key = a.custPhone && a.custPhone !== 'প্রযোজ্য নয়' ? a.custPhone : a.custName;
+                if(!custMap.has(key)) {
+                    custMap.set(key, { name: a.custName, phone: a.custPhone, lastDate: a.date });
+                } else {
+                    let item = custMap.get(key);
+                    if(a.date > item.lastDate) item.lastDate = a.date;
+                }
+            });
+
+            let totalAdvSum = 0;
+            advancePayments.forEach(a => totalAdvSum += Number(a.amount) || 0);
+            let totalTransSum = 0;
+            advanceTransfers.forEach(t => totalTransSum += Number(t.amount) || 0);
+            let remainingTotal = Math.max(0, totalAdvSum - totalTransSum);
+
+            document.getElementById('advSumTotalBalance').innerText = `৳ ${remainingTotal}`;
+            document.getElementById('advSumCustCount').innerText = `${custMap.size} জন`;
+            document.getElementById('advSumTransferred').innerText = `৳ ${totalTransSum}`;
+            document.getElementById('advSumRecords').innerText = `${advancePayments.length} টি`;
+
+            let tableHTML = '';
+            custMap.forEach((val, key) => {
+                let details = getCustomerAdvanceDetails(key);
+                tableHTML += `
+                    <tr class="hover:bg-slate-50 transition border-b border-slate-50 cursor-pointer" onclick="openCustomerAdvanceDetail('${escapeHtml(key)}')">
+                        <td class="p-3">
+                            <span class="font-bold text-slate-800">${escapeHtml(val.name)}</span>
+                            <span class="text-xs text-slate-500 block">${escapeHtml(val.phone)}</span>
+                        </td>
+                        <td class="p-3 text-right font-medium text-slate-700">৳ ${details.totalAdv}</td>
+                        <td class="p-3 text-right font-medium text-teal-600">৳ ${details.totalTrans}</td>
+                        <td class="p-3 text-right font-bold text-indigo-600">৳ ${details.remaining}</td>
+                        <td class="p-3 text-slate-600 text-xs">${escapeHtml(val.lastDate)}</td>
+                        <td class="p-3 text-center" onclick="event.stopPropagation()">
+                            <button onclick="openCustomerAdvanceDetail('${escapeHtml(key)}')" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1.5 rounded-lg text-xs font-medium transition">
+                                বিবরণী
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            if(tableHTML === '') {
+                tableHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400">কোনো অগ্রিম জমার তথ্য পাওয়া যায়নি।</td></tr>`;
+            }
+
+            const tbody = document.getElementById('advanceCustomerTableBody');
+            if(tbody) tbody.innerHTML = tableHTML;
+        }
+
+        function openCustomerAdvanceDetail(key) {
+            selectedAdvanceCustPhone = key;
+            let details = getCustomerAdvanceDetails(key);
+            let sampleCust = advancePayments.find(a => (a.custPhone === key) || (a.custName === key));
+            let name = sampleCust ? sampleCust.name : key;
+
+            document.getElementById('modalCustTitle').innerText = `${name} - অগ্রিম বিবরণী`;
+            document.getElementById('mTotalAdv').innerText = `৳ ${details.totalAdv}`;
+            document.getElementById('mTotalTrans').innerText = `৳ ${details.totalTrans}`;
+            document.getElementById('mTotalRem').innerText = `৳ ${details.remaining}`;
+
+            let historyHTML = '';
+            details.advances.forEach(a => {
+                historyHTML += `
+                    <tr class="border-b border-slate-100">
+                        <td class="p-2.5">${escapeHtml(a.date)} <span class="text-xs text-slate-400 block">${escapeHtml(a.time)}</span></td>
+                        <td class="p-2.5 text-slate-700">অগ্রিম জমা: ${escapeHtml(a.details)}</td>
+                        <td class="p-2.5 text-right font-bold text-indigo-600">+ ৳ ${a.amount}</td>
+                        <td class="p-2.5 text-center">
+                            <button onclick="deleteAdvanceRecord('${a.id}')" class="text-red-500 hover:text-red-700 p-1" title="মুছে ফেলুন">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            details.transfers.forEach(t => {
+                historyHTML += `
+                    <tr class="border-b border-slate-100 bg-teal-50/50">
+                        <td class="p-2.5">${escapeHtml(t.date)} <span class="text-xs text-slate-400 block">${escapeHtml(t.time)}</span></td>
+                        <td class="p-2.5 text-teal-800">মূল ক্যাশে ট্রান্সফার: ${escapeHtml(t.details)}</td>
+                        <td class="p-2.5 text-right font-bold text-teal-700">- ৳ ${t.amount}</td>
+                        <td class="p-2.5 text-center">
+                            <span class="text-xs text-slate-400">Transferred</span>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            if(historyHTML === '') {
+                historyHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-400">কোনো ইতিহাস নেই।</td></tr>`;
+            }
+
+            document.getElementById('modalHistoryBody').innerHTML = historyHTML;
+            document.getElementById('advanceDetailModal').classList.remove('hidden');
+        }
+
+        function closeAdvanceDetailModal() {
+            document.getElementById('advanceDetailModal').classList.add('hidden');
+            selectedAdvanceCustPhone = null;
+        }
+
+        function openTransferModal() {
+            if(!selectedAdvanceCustPhone) return;
+            let details = getCustomerAdvanceDetails(selectedAdvanceCustPhone);
+            let sampleCust = advancePayments.find(a => (a.custPhone === selectedAdvanceCustPhone) || (a.custName === selectedAdvanceCustPhone));
+            let name = sampleCust ? sampleCust.custName : selectedAdvanceCustPhone;
+
+            document.getElementById('transModalCustName').innerText = name;
+            document.getElementById('transModalAvailable').innerText = `৳ ${details.remaining}`;
+            document.getElementById('transferAmountInput').value = details.remaining;
+            document.getElementById('transferModal').classList.remove('hidden');
+        }
+
+        function closeTransferModal() {
+            document.getElementById('transferModal').classList.add('hidden');
+        }
+
+        function submitMainBalanceTransfer() {
+            if(!selectedAdvanceCustPhone) return;
+            let amount = parseFloat(document.getElementById('transferAmountInput').value);
+            let details = getCustomerAdvanceDetails(selectedAdvanceCustPhone);
+
+            if(!Number.isFinite(amount) || amount <= 0) {
+                alert('সঠিক পরিমাণ টাকা লিখুন।');
+                return;
+            }
+
+            if(amount > details.remaining) {
+                alert(`অবশিষ্ট অগ্রিম (৳ ${details.remaining}) এর বেশি টাকা ট্রান্সফার করা যাবে না!`);
+                return;
+            }
+
+            let sampleCust = advancePayments.find(a => (a.custPhone === selectedAdvanceCustPhone) || (a.custName === selectedAdvanceCustPhone));
+            let name = sampleCust ? sampleCust.custName : selectedAdvanceCustPhone;
+            let phone = sampleCust ? sampleCust.custPhone : 'প্রযোজ্য নয়';
+
+            const dateStr = getLocalDateString();
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' });
+
+            const transObj = {
+                id: 'trans_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                type: 'AdvanceTransfer',
+                advanceId: sampleCust ? sampleCust.id : '',
+                custName: name,
+                custPhone: phone,
+                amount: amount,
+                date: dateStr,
+                time: timeStr,
+                details: `গ্রাহক ${name}-এর অগ্রিম থেকে ক্যাশে স্থানান্তর`
+            };
+
+            advanceTransfers.unshift(transObj);
+            saveToLocalStorageQuiet();
+            refreshAdvancePayUI();
+            refreshDashboard();
+            closeTransferModal();
+            openCustomerAdvanceDetail(selectedAdvanceCustPhone);
+            alert('সফলভাবে মূল ক্যাশে টাকা ট্রান্সফার করা হয়েছে!');
+        }
+
+        function deleteAdvanceRecord(advId) {
+            let adv = advancePayments.find(a => a.id === advId);
+            if(!adv) return;
+
+            // Check if transferred portion exists for this customer
+            let details = getCustomerAdvanceDetails(adv.custPhone && adv.custPhone !== 'প্রযোজ্য নয়' ? adv.custPhone : adv.custName);
+            if(details.totalTrans > 0) {
+                alert('এই গ্রাহকের কিছু অগ্রিম টাকা ইতিমধ্যেই মূল ক্যাশে ট্রান্সফার করা হয়েছে। সম্পূর্ণ রেকর্ড ডিলিট করা সম্ভব নয়।');
+                return;
+            }
+
+            if(confirm('আপনি কি নিশ্চিতভাবে এই অগ্রিম এন্ট্রি মুছে ফেলতে চান?')) {
+                advancePayments = advancePayments.filter(a => a.id !== advId);
+                saveToLocalStorageQuiet();
+                refreshAdvancePayUI();
+                refreshDashboard();
+                if(selectedAdvanceCustPhone) {
+                    openCustomerAdvanceDetail(selectedAdvanceCustPhone);
+                }
+                alert('সফলভাবে অগ্রিম এন্ট্রি ডিলিট করা হয়েছে!');
+            }
+        }
+        // ================= END ADVANCE PAY FEATURE =================
+
+        // Expense Table & Filtering
         function refreshExpenseTable(filteredList = null) {
             const expenseList = filteredList || transactions.filter(tx => tx.category === 'দোকানের খরচ');
             let tableHTML = '';
@@ -1524,7 +1984,7 @@
             };
 
             transactions.unshift(dueCollectionObj);
-            syncToSupabase('transactions', dueCollectionObj);
+            syncToGoogleSheet();
             refreshDashboard();
             filterReports();
             populateDueCustomers();
@@ -1753,115 +2213,147 @@
             filterReports();
         }
 
-
-        // ================= ADVANCE PAY FEATURE LOGIC =================
-        function handleAdvancePaySubmit(event){
-            event.preventDefault();
-            const amount=Number(document.getElementById('advAmount').value), name=document.getElementById('advCustName').value.trim(), phone=document.getElementById('advCustPhone').value.trim();
-            if(!name||!Number.isFinite(amount)||amount<=0)return alert('গ্রাহকের নাম ও সঠিক অগ্রিম টাকা দিন।');
-            const a={id:makeId('adv'),date:getLocalDateString(),time:getBanglaTime(),custName:name,custPhone:phone,custAddress:document.getElementById('advCustAddress').value.trim(),staff:document.getElementById('globalStaff').value,amount:Math.round(amount*100)/100,details:document.getElementById('advDetails').value.trim()||'অগ্রিম টাকা জমা'};
-            advancePayments.unshift(a); saveToLocalStorageQuiet(); syncToSupabase('advance_payments', a); refreshAdvancePayUI(); refreshDashboard(); document.getElementById('formAdvancePay').reset(); alert('অগ্রিম টাকা সফলভাবে জমা হয়েছে। এটি Sales/Due/Main Cash-এ যোগ হয়নি।');
-        }
-        function getCustomerKey(a){return a.custPhone&&a.custPhone!=='প্রযোজ্য নয়'?a.custPhone:a.custName;}
-        function getCustomerAdvanceDetails(key){
-            const advances=advancePayments.filter(a=>getCustomerKey(a)===key || a.custName===key);
-            const ids=new Set(advances.map(a=>String(a.id)));
-            const transfers=advanceTransfers.filter(t=>ids.has(String(t.advanceId)) || getCustomerKey(t)===key || t.custName===key);
-            const totalAdv=advances.reduce((s,a)=>s+Number(a.amount||0),0), totalTrans=transfers.reduce((s,t)=>s+Number(t.amount||0),0);
-            return {totalAdv,totalTrans,remaining:Math.max(0,totalAdv-totalTrans),advances,transfers};
-        }
-        // Return the total currently unused Advance Pay balance.
-        // This helper is intentionally independent from the dashboard so restore/load
-        // can safely refresh the dashboard even when there are no advance records.
-        function getTotalAdvanceBalance(){
-            const totalAdv = advancePayments.reduce((sum, a) => sum + (Number(a.amount) || 0), 0);
-            const totalTransferred = advanceTransfers.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
-            return Math.max(0, Math.round((totalAdv - totalTransferred) * 100) / 100);
+        function promptDeleteTransaction(id) {
+            pendingAction = 'delete_single';
+            pendingParam = id;
+            openPasswordModal();
         }
 
-        function refreshAdvancePayUI(){
-            const custMap=new Map();
-            advancePayments.forEach(a=>{const key=getCustomerKey(a);if(!custMap.has(key))custMap.set(key,{name:a.custName,phone:a.custPhone,lastDate:a.date});else if(a.date>custMap.get(key).lastDate)custMap.get(key).lastDate=a.date;});
-            const totalAdv=advancePayments.reduce((s,a)=>s+Number(a.amount||0),0),totalTrans=advanceTransfers.reduce((s,t)=>s+Number(t.amount||0),0);
-            const set=(id,v)=>{const e=document.getElementById(id);if(e)e.innerText=v;};
-            set('advSumTotalBalance',`৳ ${Math.max(0,totalAdv-totalTrans)}`);set('advSumCustCount',`${custMap.size} জন`);set('advSumTransferred',`৳ ${totalTrans}`);set('advSumRecords',`${advancePayments.length} টি`);
-            let html=''; custMap.forEach((v,key)=>{const d=getCustomerAdvanceDetails(key);html+=`<tr class="hover:bg-slate-50 border-b cursor-pointer" onclick="openCustomerAdvanceDetail('${escapeHtml(key)}')"><td class="p-3"><span class="font-bold">${escapeHtml(v.name)}</span><span class="text-xs text-slate-500 block">${escapeHtml(v.phone||'')}</span></td><td class="p-3 text-right">৳ ${d.totalAdv}</td><td class="p-3 text-right text-teal-600">৳ ${d.totalTrans}</td><td class="p-3 text-right font-bold text-indigo-600">৳ ${d.remaining}</td><td class="p-3 text-xs">${escapeHtml(v.lastDate)}</td><td class="p-3 text-center"><button onclick="event.stopPropagation();openCustomerAdvanceDetail('${escapeHtml(key)}')" class="bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg text-xs">বিবরণী</button></td></tr>`;});
-            document.getElementById('advanceCustomerTableBody').innerHTML=html||`<tr><td colspan="6" class="p-6 text-center text-slate-400">কোনো অগ্রিম জমার তথ্য পাওয়া যায়নি।</td></tr>`;
+        function openClearDataModal() {
+            pendingAction = 'clear_all';
+            pendingParam = null;
+            openPasswordModal();
         }
-        function openCustomerAdvanceDetail(key){
-            selectedAdvanceCustPhone=key; const d=getCustomerAdvanceDetails(key), sample=d.advances[0], name=sample?.custName||key;
-            document.getElementById('modalCustTitle').innerText=`${name} - অগ্রিম বিবরণী`;document.getElementById('mTotalAdv').innerText=`৳ ${d.totalAdv}`;document.getElementById('mTotalTrans').innerText=`৳ ${d.totalTrans}`;document.getElementById('mTotalRem').innerText=`৳ ${d.remaining}`;
-            let html='';
-            d.advances.forEach(a=>{const used=advanceTransfers.filter(t=>String(t.advanceId)===String(a.id)).reduce((s,t)=>s+Number(t.amount||0),0);html+=`<tr class="border-b"><td class="p-2.5">${escapeHtml(a.date)}<span class="text-xs text-slate-400 block">${escapeHtml(a.time)}</span></td><td class="p-2.5">অগ্রিম জমা: ${escapeHtml(a.details)}</td><td class="p-2.5 text-right font-bold text-indigo-600">+ ৳ ${a.amount}<span class="text-xs text-slate-400 block">ব্যবহৃত ৳ ${used}</span></td><td class="p-2.5 text-center">${used===0?`<button onclick="deleteAdvanceRecord('${escapeHtml(a.id)}')" class="text-red-500 p-1"><i class="fa-solid fa-trash-can"></i></button>`:'<span class="text-xs text-slate-400">Transferred</span>'}</td></tr>`;});
-            d.transfers.forEach(t=>{html+=`<tr class="border-b bg-teal-50/50"><td class="p-2.5">${escapeHtml(t.date)}<span class="text-xs text-slate-400 block">${escapeHtml(t.time)}</span></td><td class="p-2.5 text-teal-800">মূল ক্যাশে ট্রান্সফার: ${escapeHtml(t.details)}</td><td class="p-2.5 text-right font-bold text-teal-700">- ৳ ${t.amount}</td><td class="p-2.5 text-center text-xs text-slate-400">Transferred</td></tr>`;});
-            document.getElementById('modalHistoryBody').innerHTML=html||`<tr><td colspan="4" class="p-4 text-center text-slate-400">কোনো ইতিহাস নেই।</td></tr>`;document.getElementById('advanceDetailModal').classList.remove('hidden');
-        }
-        function closeAdvanceDetailModal(){document.getElementById('advanceDetailModal').classList.add('hidden');selectedAdvanceCustPhone=null;}
-        function openTransferModal(){if(!selectedAdvanceCustPhone)return;const d=getCustomerAdvanceDetails(selectedAdvanceCustPhone),sample=d.advances[0];document.getElementById('transModalCustName').innerText=sample?.custName||selectedAdvanceCustPhone;document.getElementById('transModalAvailable').innerText=`৳ ${d.remaining}`;document.getElementById('transferAmountInput').value=d.remaining;document.getElementById('transferModal').classList.remove('hidden');}
-        function closeTransferModal(){document.getElementById('transferModal').classList.add('hidden');}
-        async function submitMainBalanceTransfer(){
-            if(!selectedAdvanceCustPhone)return; const amount=Number(document.getElementById('transferAmountInput').value), d=getCustomerAdvanceDetails(selectedAdvanceCustPhone);
-            if(!Number.isFinite(amount)||amount<=0)return alert('সঠিক পরিমাণ টাকা লিখুন।'); if(amount>d.remaining+0.000001)return alert(`অবশিষ্ট অগ্রিম (৳ ${d.remaining}) এর বেশি ট্রান্সফার করা যাবে না!`);
-            let left=amount; const now={date:getLocalDateString(),time:getBanglaTime()}; const newTransfers=[];
-            for(const a of [...d.advances].sort((x,y)=>String(x.date).localeCompare(String(y.date)))){
-                if(left<=0)break; const used=advanceTransfers.filter(t=>String(t.advanceId)===String(a.id)).reduce((s,t)=>s+Number(t.amount||0),0); const available=Math.max(0,Number(a.amount)-used); if(available<=0)continue;
-                const take=Math.min(available,left); newTransfers.push({id:makeId('trans'),advanceId:a.id,custName:a.custName,custPhone:a.custPhone,amount:Math.round(take*100)/100,date:now.date,time:now.time,details:`গ্রাহক ${a.custName}-এর অগ্রিম থেকে ক্যাশে স্থানান্তর`}); left-=take;
-            }
-            if(left>0.000001)return alert('অগ্রিম ব্যালেন্স হিসাবের সাথে অসঙ্গতি হয়েছে। আবার চেষ্টা করুন।');
-            advanceTransfers.unshift(...newTransfers); saveToLocalStorageQuiet(); syncToSupabase('advance_transfers', newTransfers); refreshAdvancePayUI(); refreshDashboard(); closeTransferModal(); openCustomerAdvanceDetail(selectedAdvanceCustPhone); alert(`৳ ${amount} সফলভাবে মূল ক্যাশে ট্রান্সফার হয়েছে। Sales/Due পরিবর্তন হয়নি।`);
-        }
-        async function deleteAdvanceRecord(advId){
-            const adv=advancePayments.find(a=>String(a.id)===String(advId)); if(!adv)return;
-            const used=advanceTransfers.filter(t=>String(t.advanceId)===String(advId)).reduce((s,t)=>s+Number(t.amount||0),0);
-            if(used>0)return alert(`এই অগ্রিম এন্ট্রি থেকে ৳ ${used} ইতিমধ্যে Main Cash-এ ট্রান্সফার হয়েছে। এই রেকর্ড ডিলিট করা যাবে না।`);
-            if(!confirm('এই অগ্রিম এন্ট্রি মুছে ফেলবেন?'))return;
-            try{await deleteRemote('advance_payments',advId);advancePayments=advancePayments.filter(a=>String(a.id)!==String(advId));saveToLocalStorageQuiet();refreshAdvancePayUI();refreshDashboard();if(selectedAdvanceCustPhone)openCustomerAdvanceDetail(selectedAdvanceCustPhone);alert('অগ্রিম এন্ট্রি মুছে ফেলা হয়েছে।');}catch(e){console.error(e);alert('ডিলিট ব্যর্থ হয়েছে: '+e.message);}
-        }
-        // ================= END ADVANCE PAY FEATURE =================
 
-        // Destructive actions use Supabase Auth re-authentication instead of a hardcoded password.
-        function promptDeleteTransaction(id){pendingAction='delete_single';pendingParam=id;openPasswordModal();}
-        function openClearDataModal(){pendingAction='clear_all';pendingParam=null;openPasswordModal();}
-        function openPasswordModal(){document.getElementById('passwordInput').value='';document.getElementById('passwordModal').classList.remove('hidden');}
-        function closePasswordModal(){document.getElementById('passwordModal').classList.add('hidden');pendingAction=null;pendingParam=null;}
-        async function verifyPasswordAction(){
-            const password=document.getElementById('passwordInput').value;
-            if(!currentUser)return alert('অনুগ্রহ করে আবার লগইন করুন।');
-            const {error:reauthError}=await supabaseClient.auth.signInWithPassword({email:currentUser.email,password});
-            if(reauthError)return alert('ভুল পাসওয়ার্ড বা পুনরায় যাচাই ব্যর্থ হয়েছে।');
+        function openPasswordModal() {
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('passwordModal').classList.remove('hidden');
+        }
+
+        function closePasswordModal() {
+            document.getElementById('passwordModal').classList.add('hidden');
+            pendingAction = null;
+            pendingParam = null;
+        }
+
+        async function verifyPasswordAction() {
+            const enteredPass = document.getElementById('passwordInput').value;
+            if(!enteredPass){ alert('পাসওয়ার্ড দিন।'); return; }
+            const {data:sessionData}=await supabaseClient.auth.getSession();
+            const email=sessionData.session?.user?.email;
+            if(!email){ alert('সেশন পাওয়া যায়নি। আবার লগইন করুন।'); return; }
+            const {error:authError}=await supabaseClient.auth.signInWithPassword({email,password:enteredPass});
+            if(authError){ alert('ভুল পাসওয়ার্ড!'); return; }
             try{
                 if(pendingAction==='delete_single'){
                     const deleteId=String(pendingParam);
-                    await deleteRemote('transactions',deleteId);
+                    await syncQueue;
+                    await deleteRemoteTransaction(deleteId);
                     transactions=transactions.filter(tx=>String(tx.id)!==deleteId);
                     saveToLocalStorageQuiet();
-                    refreshDashboard();filterReports();populateDueCustomers();refreshExpenseTable();refreshAdvancePayUI();
+                    refreshDashboard(); filterReports(); populateDueCustomers(); refreshExpenseTable(); refreshAdvancePayUI();
                     closePasswordModal();
-                    alert('এন্ট্রি সফলভাবে মুছে ফেলা হয়েছে।');
-                    return;
-                } else if(pendingAction==='clear_all'){
+                    alert('সফলভাবে এন্ট্রি মুছে ফেলা হয়েছে!');
+                }else if(pendingAction==='clear_all'){
                     await syncQueue;
-                    await clearRemoteData(); transactions=[];advancePayments=[];advanceTransfers=[];
+                    await clearRemoteData();
+                    transactions=[]; advancePayments=[]; advanceTransfers=[];
+                    saveToLocalStorageQuiet();
+                    refreshDashboard(); filterReports(); populateDueCustomers(); refreshExpenseTable(); refreshAdvancePayUI();
+                    closePasswordModal();
+                    alert('সকল ডাটা সফলভাবে মুছে ফেলা হয়েছে!');
                 }
-                saveToLocalStorageQuiet();refreshDashboard();filterReports();populateDueCustomers();refreshExpenseTable();refreshAdvancePayUI();closePasswordModal();alert('অপারেশন সফল হয়েছে।');
-            }catch(e){console.error(e);alert('অপারেশন ব্যর্থ: '+e.message);}
+            }catch(e){ console.error('Delete failed:',e); alert('অপারেশন ব্যর্থ: '+(e.message||'ডাটাবেস থেকে ডাটা মুছতে সমস্যা হয়েছে।')); }
         }
-        function exportToCSV(){
-            let csv='data:text/csv;charset=utf-8,\uFEFF';csv+='ID,Date,Time,Category,Details,Customer Name,Customer Phone,Payment Type,Staff,Amount,Print Pages,Photocopy Pages,Damaged Pages\n';
-            transactions.forEach(tx=>csv+=[tx.id,tx.date,tx.time,tx.category,tx.details,tx.custName,tx.custPhone,tx.paymentType,tx.staff,tx.amount,tx.printPages,tx.photocopyPages,tx.damagedPages].map(csvEscape).join(',')+'\n');
-            const a=document.createElement('a');a.href=encodeURI(csv);a.download=`Rajshahi_Air_Travels_Report_${getLocalDateString()}.csv`;document.body.appendChild(a);a.click();a.remove();
+
+        // Export to CSV with Advance Data included
+        function exportToCSV() {
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+            csvContent += "ID,Date,Time,Category,Details,Customer Name,Customer Phone,Payment Type,Staff,Amount,Print Pages,Photocopy Pages,Damaged Pages\n";
+
+            transactions.forEach(tx => {
+                let row = [
+                    csvEscape(tx.id),
+                    csvEscape(tx.date),
+                    csvEscape(tx.time),
+                    csvEscape(tx.category),
+                    csvEscape(tx.details),
+                    csvEscape(tx.custName),
+                    csvEscape(tx.custPhone),
+                    csvEscape(tx.paymentType),
+                    csvEscape(tx.staff),
+                    Number(tx.amount) || 0,
+                    Number(tx.printPages) || 0,
+                    Number(tx.photocopyPages) || 0,
+                    Number(tx.damagedPages) || 0
+                ];
+                csvContent += row.join(",") + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Rajshahi_Air_Travels_Report_${getLocalDateString()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
-        function performBackup(){const obj={version:2,exportedAt:new Date().toISOString(),transactions,advancePayments,advanceTransfers};const a=document.createElement('a');a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(obj,null,2));a.download=`rajshahi_air_backup_${getLocalDateString()}.json`;document.body.appendChild(a);a.click();a.remove();alert('ব্যাকআপ সফলভাবে তৈরি হয়েছে।');}
-        async function performRestore(){
-            const raw=document.getElementById('restoreInput').value.trim(); if(!raw)return alert('JSON backup দিন।'); if(!confirm('রিস্টোর করলে বর্তমান অনলাইন ডেটা প্রতিস্থাপিত হবে। নিশ্চিত?'))return;
-            try{
-                const parsed=JSON.parse(raw); const tx=normalizeTransactions(Array.isArray(parsed)?parsed:parsed.transactions||[]); const adv=normalizeAdvances(Array.isArray(parsed)?[]:parsed.advancePayments||[]); const tr=normalizeTransfers(Array.isArray(parsed)?[]:parsed.advanceTransfers||[]);
-                await clearRemoteData();
-                if(tx.length) {const {error}=await supabaseClient.from('transactions').insert(tx.map(txToRow));if(error)throw error;}
-                if(adv.length){const {error}=await supabaseClient.from('advance_payments').insert(adv.map(advToRow));if(error)throw error;}
-                if(tr.length){const validTr=tr.filter(x=>adv.some(a=>String(a.id)===String(x.advanceId)));const {error}=await supabaseClient.from('advance_transfers').insert(validTr.map(transferToRow));if(error)throw error;}
-                transactions=tx;advancePayments=adv;advanceTransfers=tr.filter(x=>adv.some(a=>String(a.id)===String(x.advanceId)));saveToLocalStorageQuiet();refreshDashboard();filterReports();populateDueCustomers();refreshExpenseTable();refreshAdvancePayUI();document.getElementById('restoreInput').value='';alert('ডাটা সফলভাবে রিস্টোর হয়েছে।');
-            }catch(e){console.error(e);alert('রিস্টোর ব্যর্থ: '+e.message);}
+
+        // Backup & Restore with Advance data support
+        function performBackup() {
+            const backupObj = {
+                transactions: transactions,
+                advancePayments: advancePayments,
+                advanceTransfers: advanceTransfers
+            };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupObj, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `rajshahi_air_backup_${getLocalDateString()}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            alert('ব্যাকআপ ফাইল সফলভাবে ডাউনলোড হয়েছে!');
+        }
+
+        function performRestore() {
+            const inputVal = document.getElementById('restoreInput').value.trim();
+            if (!inputVal) {
+                alert('দয়া করে ব্যাকআপ কোড বা JSON ডাটা এখানে দিন।');
+                return;
+            }
+
+            if(!confirm('রিস্টোর করলে বর্তমান সব ডেটা ব্যাকআপ ডেটা দ্বারা প্রতিস্থাপিত হবে। আপনি কি নিশ্চিত?')) return;
+
+            try {
+                const parsedData = JSON.parse(inputVal);
+                if (Array.isArray(parsedData)) {
+                    // Old format backup containing only transactions array
+                    transactions = normalizeTransactions(parsedData);
+                    advancePayments = [];
+                    advanceTransfers = [];
+                } else if (parsedData && typeof parsedData === 'object') {
+                    // New comprehensive format
+                    transactions = normalizeTransactions(parsedData.transactions || []);
+                    advancePayments = normalizeAdvances(parsedData.advancePayments || []);
+                    advanceTransfers = normalizeTransfers(parsedData.advanceTransfers || []);
+                } else {
+                    alert('সঠিক ব্যাকআপ ডাটা ফরম্যাট পাওয়া যায়নি।');
+                    return;
+                }
+
+                saveToLocalStorageQuiet();
+                syncToGoogleSheet();
+                refreshDashboard();
+                filterReports();
+                populateDueCustomers();
+                refreshExpenseTable();
+                refreshAdvancePayUI();
+                alert('সফলভাবে ডাটা রিস্টোর করা হয়েছে!');
+                document.getElementById('restoreInput').value = '';
+            } catch (e) {
+                alert('রিস্টোর করতে সমস্যা হয়েছে। সঠিক JSON কোড দিন।');
+            }
         }
     </script>
 </body>
