@@ -1045,6 +1045,34 @@
                 transactions = []; advancePayments = []; advanceTransfers = [];
             }
         }
+        function normalizeDateString(value) {
+            if (value === null || value === undefined || value === '') return '';
+            if (value instanceof Date && !isNaN(value.getTime())) {
+                const parts = new Intl.DateTimeFormat('en-CA', {timeZone:'Asia/Dhaka', year:'numeric', month:'2-digit', day:'2-digit'}).formatToParts(value);
+                const m = Object.fromEntries(parts.map(p => [p.type,p.value]));
+                return `${m.year}-${m.month}-${m.day}`;
+            }
+            let v = String(value).trim();
+            if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+            // ISO datetime / timestamp
+            const iso = v.match(/^(\d{4}-\d{2}-\d{2})[T\s]/);
+            if (iso) return iso[1];
+            // Bangladesh-style DD/MM/YYYY or DD-MM-YYYY
+            let m = v.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
+            if (m) {
+                const dd=Number(m[1]), mm=Number(m[2]), yy=Number(m[3]);
+                if (mm>=1 && mm<=12 && dd>=1 && dd<=31) return `${yy}-${String(mm).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
+            }
+            // Date strings that the browser can parse: convert using Bangladesh timezone.
+            const parsed = new Date(v);
+            if (!isNaN(parsed.getTime())) {
+                const parts = new Intl.DateTimeFormat('en-CA', {timeZone:'Asia/Dhaka', year:'numeric', month:'2-digit', day:'2-digit'}).formatToParts(parsed);
+                const x = Object.fromEntries(parts.map(p => [p.type,p.value]));
+                if (x.year && x.month && x.day) return `${x.year}-${x.month}-${x.day}`;
+            }
+            return '';
+        }
+
         function normalizeTransactions(raw) {
             if (!Array.isArray(raw)) return [];
             const out = [];
@@ -1052,9 +1080,9 @@
             for (const tx of raw) {
                 if (!tx || typeof tx !== 'object') continue;
                 const amount = Number(tx.amount);
-                const paymentType = String(tx.paymentType || '').trim();
-                const date = String(tx.date || '').trim();
-                if (!Number.isFinite(amount) || amount <= 0 || !['Paid','Due','Expense'].includes(paymentType) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+                const paymentType = String(tx.paymentType || tx.payment_type || '').trim();
+                const date = normalizeDateString(tx.date);
+                if (!Number.isFinite(amount) || amount <= 0 || !['Paid','Due','Expense'].includes(paymentType) || !date) continue;
                 const id = String(tx.id || makeId('tx'));
                 if (ids.has(id)) continue; ids.add(id);
                 out.push({
@@ -1067,9 +1095,9 @@
                     staff: typeof tx.staff === 'string' ? tx.staff : 'Abu bokor',
                     amount: Math.round(amount * 100) / 100,
                     paymentType,
-                    printPages: Math.max(0, Number(tx.printPages) || 0),
-                    photocopyPages: Math.max(0, Number(tx.photocopyPages) || 0),
-                    damagedPages: Math.max(0, Number(tx.damagedPages) || 0)
+                    printPages: Math.max(0, Number(tx.printPages ?? tx.print_pages) || 0),
+                    photocopyPages: Math.max(0, Number(tx.photocopyPages ?? tx.photocopy_pages) || 0),
+                    damagedPages: Math.max(0, Number(tx.damagedPages ?? tx.damaged_pages) || 0)
                 });
             }
             return out;
@@ -1079,8 +1107,8 @@
             const out=[]; const ids=new Set();
             for (const a of raw) {
                 if (!a || typeof a !== 'object') continue;
-                const amount=Number(a.amount), date=String(a.date||'').trim(), name=String(a.custName||'').trim();
-                if (!Number.isFinite(amount)||amount<=0||!/^\d{4}-\d{2}-\d{2}$/.test(date)||!name) continue;
+                const amount=Number(a.amount), date=normalizeDateString(a.date), name=String(a.custName||'').trim();
+                if (!Number.isFinite(amount)||amount<=0||!date||!name) continue;
                 const id=String(a.id||makeId('adv')); if(ids.has(id)) continue; ids.add(id);
                 out.push({id,date,time:typeof a.time==='string'?a.time:'',custName:name,custPhone:typeof a.custPhone==='string'?a.custPhone.trim():'',custAddress:typeof a.custAddress==='string'?a.custAddress.trim():'',staff:typeof a.staff==='string'?a.staff:'Abu bokor',amount:Math.round(amount*100)/100,details:typeof a.details==='string'?a.details:'অগ্রিম টাকা জমা'});
             }
@@ -1091,8 +1119,8 @@
             const out=[]; const ids=new Set();
             for (const t of raw) {
                 if (!t || typeof t !== 'object') continue;
-                const amount=Number(t.amount), date=String(t.date||'').trim();
-                if (!Number.isFinite(amount)||amount<=0||!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+                const amount=Number(t.amount), date=normalizeDateString(t.date);
+                if (!Number.isFinite(amount)||amount<=0||!date) continue;
                 const id=String(t.id||makeId('trans')); if(ids.has(id)) continue; ids.add(id);
                 out.push({id,advanceId:String(t.advanceId||''),custName:typeof t.custName==='string'?t.custName:'গ্রাহক',custPhone:typeof t.custPhone==='string'?t.custPhone:'',amount:Math.round(amount*100)/100,date,time:typeof t.time==='string'?t.time:'',details:typeof t.details==='string'?t.details:'মূল ক্যাশে ট্রান্সফার'});
             }
@@ -1106,7 +1134,11 @@
         function transferToRow(t){ return {id:t.id,advance_id:t.advanceId,cust_name:t.custName,cust_phone:t.custPhone,amount:t.amount,date:t.date,time:t.time,details:t.details}; }
 
         async function loadSupabaseData() {
+            // Load local cache first so the dashboard can render immediately.
             loadLocalDataSafely();
+            const localTx = [...transactions];
+            const localAdv = [...advancePayments];
+            const localTr = [...advanceTransfers];
             updateSyncStatus('Syncing...', 'bg-blue-800 text-blue-200');
             try {
                 const [txRes, advRes, trRes] = await Promise.all([
@@ -1122,48 +1154,65 @@
                 let remoteAdv = normalizeAdvances((advRes.data||[]).map(mapAdvanceRow));
                 let remoteTr = normalizeTransfers((trRes.data||[]).map(mapTransferRow));
 
-                // One-time legacy import: only when Supabase transaction table is empty.
-                if(remoteTx.length === 0 && !localStorage.getItem('legacy_google_imported_v1')) {
+                // IMPORTANT: migrate/merge the old Google Sheet once, even when Supabase already
+                // contains a few records. This prevents the new online version from showing only
+                // the newly-created rows while the old history remains elsewhere.
+                let legacyTx = [];
+                if (!localStorage.getItem('legacy_google_imported_v2')) {
                     try {
                         const resp = await fetch(GOOGLE_SCRIPT_URL);
-                        if(resp.ok){
-                            const legacy = normalizeTransactions(await resp.json());
-                            if(legacy.length){
-                                const {error}=await supabaseClient.from('transactions').upsert(legacy.map(txToRow),{onConflict:'id'});
-                                if(!error) remoteTx=legacy;
-                            }
+                        if(resp.ok) {
+                            const data = await resp.json();
+                            legacyTx = normalizeTransactions(Array.isArray(data) ? data : []);
                         }
-                    } catch(e){ console.warn('Legacy Google import skipped:',e); }
-                    localStorage.setItem('legacy_google_imported_v1','1');
+                    } catch(e) { console.warn('Legacy Google import skipped:', e); }
+                    localStorage.setItem('legacy_google_imported_v2','1');
                 }
 
-                // Supabase is the online source of truth once remote data exists.
-                // LocalStorage is used for first-time migration/offline display, but stale local rows
-                // are never automatically pushed over an existing remote dataset.
-                if (remoteTx.length === 0 && transactions.length) {
-                    const {error}=await supabaseClient.from('transactions').upsert(transactions.map(txToRow),{onConflict:'id'});
+                // Merge by ID: remote is preferred when the same ID exists; local/legacy-only
+                // rows are retained and then uploaded. This restores the old Dashboard history
+                // without overwriting newer online edits.
+                const mergeById = (...lists) => {
+                    const map = new Map();
+                    for (const list of lists) for (const row of list) if(row && row.id) map.set(String(row.id), row);
+                    return [...map.values()];
+                };
+                const mergedTx = mergeById(localTx, legacyTx, remoteTx);
+                const mergedAdv = mergeById(localAdv, remoteAdv);
+                const mergedTr = mergeById(localTr, remoteTr);
+
+                // Push only records that are missing remotely. Existing remote rows remain canonical.
+                const remoteIds = new Set(remoteTx.map(x=>String(x.id)));
+                const missingTx = mergedTx.filter(x=>!remoteIds.has(String(x.id)));
+                if(missingTx.length) {
+                    const {error}=await supabaseClient.from('transactions').upsert(missingTx.map(txToRow),{onConflict:'id'});
                     if(error) throw error;
-                    remoteTx=transactions;
                 }
-                if (remoteAdv.length === 0 && advancePayments.length) {
-                    const {error}=await supabaseClient.from('advance_payments').upsert(advancePayments.map(advToRow),{onConflict:'id'});
+                const remoteAdvIds = new Set(remoteAdv.map(x=>String(x.id)));
+                const missingAdv = mergedAdv.filter(x=>!remoteAdvIds.has(String(x.id)));
+                if(missingAdv.length) {
+                    const {error}=await supabaseClient.from('advance_payments').upsert(missingAdv.map(advToRow),{onConflict:'id'});
                     if(error) throw error;
-                    remoteAdv=advancePayments;
                 }
-                if (remoteTr.length === 0 && advanceTransfers.length) {
-                    const validTr=advanceTransfers.filter(t=>advancePayments.some(a=>String(a.id)===String(t.advanceId)));
-                    const {error}=await supabaseClient.from('advance_transfers').upsert(validTr.map(transferToRow),{onConflict:'id'});
+                const validMergedTr = mergedTr.filter(t=>mergedAdv.some(a=>String(a.id)===String(t.advanceId)));
+                const remoteTrIds = new Set(remoteTr.map(x=>String(x.id)));
+                const missingTr = validMergedTr.filter(x=>!remoteTrIds.has(String(x.id)));
+                if(missingTr.length) {
+                    const {error}=await supabaseClient.from('advance_transfers').upsert(missingTr.map(transferToRow),{onConflict:'id'});
                     if(error) throw error;
-                    remoteTr=validTr;
                 }
-                transactions=normalizeTransactions(remoteTx);
-                advancePayments=normalizeAdvances(remoteAdv);
-                advanceTransfers=normalizeTransfers(remoteTr);
+
+                transactions=normalizeTransactions(mergedTx);
+                advancePayments=normalizeAdvances(mergedAdv);
+                advanceTransfers=normalizeTransfers(validMergedTr);
                 saveToLocalStorageQuiet();
                 updateSyncStatus('Online • Synced','bg-emerald-600 text-white');
             } catch(e) {
                 console.error('Supabase load failed:',e);
-                updateSyncStatus('Offline Mode','bg-amber-600 text-white');
+                // Never throw away a valid local cache on a network/RLS failure.
+                transactions=localTx; advancePayments=localAdv; advanceTransfers=localTr;
+                saveToLocalStorageQuiet();
+                updateSyncStatus('Offline • Local Data','bg-amber-600 text-white');
             }
             initializeAppContent();
         }
@@ -1464,7 +1513,7 @@
             };
 
             transactions.unshift(dueCollectionObj);
-            syncToGoogleSheet();
+            syncToSupabase('transactions', dueCollectionObj);
             refreshDashboard();
             filterReports();
             populateDueCustomers();
@@ -1710,6 +1759,15 @@
             const totalAdv=advances.reduce((s,a)=>s+Number(a.amount||0),0), totalTrans=transfers.reduce((s,t)=>s+Number(t.amount||0),0);
             return {totalAdv,totalTrans,remaining:Math.max(0,totalAdv-totalTrans),advances,transfers};
         }
+        // Return the total currently unused Advance Pay balance.
+        // This helper is intentionally independent from the dashboard so restore/load
+        // can safely refresh the dashboard even when there are no advance records.
+        function getTotalAdvanceBalance(){
+            const totalAdv = advancePayments.reduce((sum, a) => sum + (Number(a.amount) || 0), 0);
+            const totalTransferred = advanceTransfers.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+            return Math.max(0, Math.round((totalAdv - totalTransferred) * 100) / 100);
+        }
+
         function refreshAdvancePayUI(){
             const custMap=new Map();
             advancePayments.forEach(a=>{const key=getCustomerKey(a);if(!custMap.has(key))custMap.set(key,{name:a.custName,phone:a.custPhone,lastDate:a.date});else if(a.date>custMap.get(key).lastDate)custMap.get(key).lastDate=a.date;});
