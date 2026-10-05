@@ -99,6 +99,9 @@
                     </div>
                 </div>
                 <div class="flex items-center space-x-4 mt-2 sm:mt-0">
+                    <div id="syncStatusBadge" class="bg-blue-800 text-xs px-2.5 py-1 rounded-md text-blue-200 border border-blue-700">
+                        <i class="fa-solid fa-rotate animate-spin mr-1"></i> Syncing...
+                    </div>
                     <div class="bg-blue-800 px-3 py-1.5 rounded-lg text-sm flex items-center space-x-2 border border-blue-700">
                         <i class="fa-solid fa-user-tie text-blue-300"></i>
                         <span>কর্মী:</span>
@@ -148,6 +151,10 @@
                     <i class="fa-solid fa-hand-holding-dollar"></i>
                     <span>বাকি টাকা গ্রহণ</span>
                 </button>
+                <button onclick="switchTab('advancePay')" id="nav-advancePay" class="tab-btn px-4 py-2 rounded-lg font-medium text-sm flex items-center space-x-2 text-slate-600 hover:bg-slate-100 transition whitespace-nowrap">
+                    <i class="fa-solid fa-hand-holding-hand"></i>
+                    <span>অগ্রিম টাকা (Advance Pay)</span>
+                </button>
                 <button onclick="switchTab('reports')" id="nav-reports" class="tab-btn px-4 py-2 rounded-lg font-medium text-sm flex items-center space-x-2 text-slate-600 hover:bg-slate-100 transition whitespace-nowrap">
                     <i class="fa-solid fa-file-excel"></i>
                     <span>বিক্রি ও খরচ রিপোর্ট</span>
@@ -164,7 +171,7 @@
 
             <!-- 1. DASHBOARD TAB -->
             <section id="tab-dashboard" class="tab-content space-y-6">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <!-- New Bortoman Cash Card -->
                     <div class="bg-gradient-to-r from-teal-500 to-emerald-600 text-white p-5 rounded-xl shadow-md flex items-center space-x-4">
                         <div class="bg-white/20 text-white p-4 rounded-xl text-2xl">
@@ -173,6 +180,17 @@
                         <div>
                             <p class="text-sm text-teal-100 font-medium">বর্তমান ক্যাশ (Cash in Hand)</p>
                             <h3 id="dashBortomanCash" class="text-2xl font-bold">৳ ০</h3>
+                        </div>
+                    </div>
+
+                    <!-- New Advance Balance Card -->
+                    <div onclick="switchTab('advancePay')" class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-5 rounded-xl shadow-md flex items-center space-x-4 cursor-pointer hover:opacity-95 transition">
+                        <div class="bg-white/20 text-white p-4 rounded-xl text-2xl">
+                            <i class="fa-solid fa-hand-holding-hand"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-indigo-100 font-medium">অগ্রিম ব্যালেন্স (Advance Balance)</p>
+                            <h3 id="dashAdvanceBalance" class="text-2xl font-bold">৳ ০</h3>
                         </div>
                     </div>
 
@@ -190,7 +208,7 @@
                             <i class="fa-solid fa-clock"></i>
                         </div>
                         <div>
-                            <p class="text-sm text-slate-500 font-medium">আজকের নতুন বকেয়া</p>
+                            <p class="text-sm text-slate-500 font-medium">আজকের নেট বকেয়া</p>
                             <h3 id="dashTodayDue" class="text-2xl font-bold text-slate-800">৳ ০</h3>
                         </div>
                     </div>
@@ -217,7 +235,7 @@
                             <i class="fa-solid fa-calendar-days"></i>
                         </div>
                         <div>
-                            <p class="text-sm text-slate-500 font-medium">এই মাসের মোট বকেয়া</p>
+                            <p class="text-sm text-slate-500 font-medium">এই মাসের নেট বকেয়া</p>
                             <h3 id="dashMonthDue" class="text-2xl font-bold text-slate-800">৳ ০</h3>
                         </div>
                     </div>
@@ -282,7 +300,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 mb-1">মোট বিল (৳)</label>
-                                <input type="number" id="pcAmount" min="0" required class="w-full border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="উদাহরণ: ৫০">
+                                <input type="number" id="pcAmount" min="1" required class="w-full border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="উদাহরণ: ৫০">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 mb-1">পেমেন্ট টাইপ</label>
@@ -351,7 +369,7 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 mb-1">মোট বিল (৳)</label>
-                                <input type="number" id="printAmount" min="0" required class="w-full border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="১০০">
+                                <input type="number" id="printAmount" min="1" required class="w-full border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="১০০">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 mb-1">পেমেন্ট</label>
@@ -399,7 +417,7 @@
                         <div id="productListContainer" class="space-y-3">
                             <div class="flex items-center space-x-2 product-row">
                                 <input type="text" placeholder="প্রোডাক্টের নাম" required class="flex-grow border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none prod-name">
-                                <input type="number" placeholder="দাম (৳)" min="0" required class="w-32 border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none prod-price">
+                                <input type="number" placeholder="দাম (৳)" min="1" required class="w-32 border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none prod-price">
                                 <button type="button" onclick="removeProductRow(this)" class="bg-red-100 text-red-600 hover:bg-red-200 px-3 py-2.5 rounded-lg transition hidden remove-btn">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
@@ -480,7 +498,7 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1">টাকার পরিমাণ (৳)</label>
-                            <input type="number" id="bankAmount" min="0" required class="w-full border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="উদাহরণ: ১০০০">
+                            <input type="number" id="bankAmount" min="1" required class="w-full border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="উদাহরণ: ১০০০">
                         </div>
 
                         <!-- Customer Info -->
@@ -527,7 +545,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 mb-1">টাকার পরিমাণ (৳)</label>
-                                <input type="number" id="expenseAmount" min="0" required class="w-full border rounded-lg px-4 py-2.5 bg-white focus:ring-2 focus:ring-red-500 focus:outline-none" placeholder="উদাহরণ: ২০০">
+                                <input type="number" id="expenseAmount" min="1" required class="w-full border rounded-lg px-4 py-2.5 bg-white focus:ring-2 focus:ring-red-500 focus:outline-none" placeholder="উদাহরণ: ২০০">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 mb-1">নোট / মন্তব্য (ঐচ্ছিক)</label>
@@ -610,7 +628,7 @@
                         
                         <div class="pt-2 border-t">
                             <label class="block text-sm font-medium text-slate-700 mb-1">কত টাকা গ্রহণ করা হলো?</label>
-                            <input type="number" id="payDueAmount" min="0" class="w-full border rounded-lg px-4 py-2.5 bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="টাকার পরিমাণ লিখুন">
+                            <input type="number" id="payDueAmount" min="1" class="w-full border rounded-lg px-4 py-2.5 bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="টাকার পরিমাণ লিখুন">
                         </div>
                         <button onclick="submitDuePayment()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 rounded-lg transition shadow-sm">
                             বাকি টাকা জমা নিন (Paid)
@@ -619,7 +637,91 @@
                 </div>
             </section>
 
-            <!-- 8. REPORTS TAB -->
+            <!-- 8. ADVANCE PAY TAB (NEW FEATURE) -->
+            <section id="tab-advancePay" class="tab-content hidden space-y-6">
+                <div class="bg-white rounded-xl shadow-sm border p-6 space-y-6">
+                    <h2 class="text-xl font-bold text-slate-800 flex items-center space-x-2 border-b pb-3">
+                        <i class="fa-solid fa-hand-holding-hand text-indigo-600"></i>
+                        <span>গ্রাহকের অগ্রিম টাকা (Advance Pay) ব্যবস্থাপনা</span>
+                    </h2>
+
+                    <!-- Summary Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+                            <p class="text-xs text-indigo-600 font-medium">মোট অবিক্রীত অগ্রিম ব্যালেন্স</p>
+                            <h3 id="advSumTotalBalance" class="text-xl font-bold text-indigo-900">৳ ০</h3>
+                        </div>
+                        <div class="bg-purple-50 p-4 rounded-xl border border-purple-100">
+                            <p class="text-xs text-purple-600 font-medium">অগ্রিম দেওয়া মোট গ্রাহক</p>
+                            <h3 id="advSumCustCount" class="text-xl font-bold text-purple-900">০ জন</h3>
+                        </div>
+                        <div class="bg-teal-50 p-4 rounded-xl border border-teal-100">
+                            <p class="text-xs text-teal-600 font-medium">মূল ক্যাশে স্থানান্তরিত মোট</p>
+                            <h3 id="advSumTransferred" class="text-xl font-bold text-teal-900">৳ ০</h3>
+                        </div>
+                        <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                            <p class="text-xs text-blue-600 font-medium">মোট অগ্রিম রেকর্ড</p>
+                            <h3 id="advSumRecords" class="text-xl font-bold text-blue-900">০ টি</h3>
+                        </div>
+                    </div>
+
+                    <!-- Advance Pay Entry Form -->
+                    <form id="formAdvancePay" onsubmit="handleAdvancePaySubmit(event)" class="bg-slate-50 p-5 rounded-xl border space-y-4">
+                        <h3 class="text-sm font-bold text-slate-700"><i class="fa-solid fa-plus text-indigo-600 mr-1"></i> নতুন অগ্রিম টাকা গ্রহণ করুন</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">গ্রাহকের নাম *</label>
+                                <input type="text" id="advCustName" required class="w-full border rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="গ্রাহকের নাম">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">ফোন নম্বর</label>
+                                <input type="text" id="advCustPhone" class="w-full border rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="মোবাইল নম্বর">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">অগ্রিম টাকার পরিমাণ (৳) *</label>
+                                <input type="number" id="advAmount" min="1" required class="w-full border rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="উদাহরণ: ৫০০০">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">ঠিকানা</label>
+                                <input type="text" id="advCustAddress" class="w-full border rounded-lg px-3 py-2 text-sm bg-white" placeholder="গ্রাহকের ঠিকানা">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">নোট / বিবরণ</label>
+                                <input type="text" id="advDetails" class="w-full border rounded-lg px-3 py-2 text-sm bg-white" placeholder="কী বাবদ অগ্রিম নেওয়া হলো">
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg transition shadow-sm text-sm">
+                            অগ্রিম টাকা জমা নিন (Add Advance)
+                        </button>
+                    </form>
+
+                    <!-- Customer-wise Advance List Table -->
+                    <div class="space-y-3 pt-2">
+                        <h3 class="text-base font-bold text-slate-800">গ্রাহকভিত্তিক অগ্রিম তালিকা</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-100 text-slate-600 text-sm">
+                                        <th class="p-3 rounded-l-lg">গ্রাহকের নাম ও ফোন</th>
+                                        <th class="p-3 text-right">মোট অগ্রিম</th>
+                                        <th class="p-3 text-right">স্থানান্তরিত</th>
+                                        <th class="p-3 text-right">অবশিষ্ট অগ্রিম</th>
+                                        <th class="p-3">শেষ তারিখ</th>
+                                        <th class="p-3 text-center rounded-r-lg">অ্যাকশন</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="advanceCustomerTableBody" class="text-sm divide-y divide-slate-100">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 9. REPORTS TAB -->
             <section id="tab-reports" class="tab-content hidden space-y-6">
                 <div class="bg-white rounded-xl shadow-sm border p-6 space-y-4">
                     <h3 class="text-lg font-bold text-slate-800 flex items-center space-x-2">
@@ -714,7 +816,7 @@
                 </div>
             </section>
 
-            <!-- 9. BACKUP & RESTORE TAB -->
+            <!-- 10. BACKUP & RESTORE TAB -->
             <section id="tab-backup" class="tab-content hidden space-y-6">
                 <div class="max-w-2xl mx-auto space-y-6">
                     <!-- Backup Box -->
@@ -723,14 +825,14 @@
                             <i class="fa-solid fa-cloud-arrow-up text-blue-600"></i>
                             <span>গুগল ড্রাইভ ব্যাকআপ</span>
                         </h3>
-                        <p class="text-sm text-slate-600">আপনার শপের ডাটা সুরক্ষিত রাখতে গুগল ড্রাইভ লিংক এখানে দিয়ে ব্যাকআপ ফাইল নামিয়ে ড্রাইভে রাখুন।</p>
+                        <p class="text-sm text-slate-600">আপনার শপের ডাটা সুরক্ষিত রাখতে ব্যাকআপ ফাইল নামিয়ে ড্রাইভে বা কম্পিউটারে রাখুন।</p>
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">গুগল ড্রাইভ লিংক</label>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">গুগল ড্রাইভ লিংক (রেফারেন্স)</label>
                             <input type="text" id="gdriveLink" class="w-full border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="এখানে আপনার গুগল ড্রাইভ লিংক দিন...">
                         </div>
                         <button onclick="performBackup()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition shadow-sm flex items-center justify-center space-x-2">
                             <i class="fa-solid fa-cloud-arrow-up"></i>
-                            <span>ব্যাকআপ ফাইল ডাউনলোড করুন</span>
+                            <span>ব্যাকআপ ফাইল ডাউনলোড করুন (JSON)</span>
                         </button>
                     </div>
 
@@ -741,7 +843,7 @@
                             <span>ডাটা রিস্টোর (Restore)</span>
                         </h3>
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">ব্যাকআপ JSON কোড বা ডাটা</label>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">ব্যাকআপ JSON কোড বা ডাটা পেস্ট করুন</label>
                             <textarea id="restoreInput" rows="3" class="w-full border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="এখানে ব্যাকআপ ডাটা পেস্ট করুন..."></textarea>
                         </div>
                         <button onclick="performRestore()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 rounded-lg transition shadow-sm flex items-center justify-center space-x-2">
@@ -753,6 +855,96 @@
             </section>
 
         </main>
+    </div>
+
+    <!-- Customer Advance Details Modal (NEW) -->
+    <div id="advanceDetailModal" class="fixed inset-0 bg-slate-900 bg-opacity-60 z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="text-lg font-bold text-indigo-900 flex items-center space-x-2">
+                    <i class="fa-solid fa-user-gear"></i>
+                    <span id="modalCustTitle">গ্রাহকের অগ্রিম বিবরণী</span>
+                </h3>
+                <button onclick="closeAdvanceDetailModal()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="grid grid-cols-3 gap-3 text-center">
+                <div class="bg-slate-50 p-3 rounded-lg border">
+                    <span class="text-xs text-slate-500">মোট অগ্রিম</span>
+                    <h4 id="mTotalAdv" class="text-base font-bold text-slate-800">৳ ০</h4>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-lg border">
+                    <span class="text-xs text-slate-500">স্থানান্তরিত</span>
+                    <h4 id="mTotalTrans" class="text-base font-bold text-teal-700">৳ ০</h4>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-lg border">
+                    <span class="text-xs text-slate-500">অবশিষ্ট</span>
+                    <h4 id="mTotalRem" class="text-base font-bold text-indigo-700">৳ ০</h4>
+                </div>
+            </div>
+
+            <div class="pt-2">
+                <button onclick="openTransferModal()" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium py-2.5 rounded-lg transition text-sm shadow-sm flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    <span>মূল ক্যাশে টাকা ট্রান্সফার করুন (Transfer to Main Balance)</span>
+                </button>
+            </div>
+
+            <div class="space-y-2 pt-2">
+                <h4 class="text-sm font-bold text-slate-700">অগ্রিম পেমেন্ট ও ট্রান্সফার ইতিহাস</h4>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-600">
+                                <th class="p-2.5 rounded-l-lg">তারিখ</th>
+                                <th class="p-2.5">বিবরণ</th>
+                                <th class="p-2.5 text-right">পরিমাণ</th>
+                                <th class="p-2.5 text-center rounded-r-lg">অ্যাকশন</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modalHistoryBody" class="divide-y divide-slate-100">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="flex justify-end pt-2">
+                <button onclick="closeAdvanceDetailModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium transition">
+                    বন্ধ করুন
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transfer to Main Balance Modal (NEW) -->
+    <div id="transferModal" class="fixed inset-0 bg-slate-900 bg-opacity-60 z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="text-lg font-bold text-teal-900 flex items-center space-x-2">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    <span>মূল ক্যাশে টাকা ট্রান্সফার</span>
+                </h3>
+                <button onclick="closeTransferModal()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <p class="text-sm text-slate-600">গ্রাহক: <strong id="transModalCustName" class="text-slate-800"></strong></p>
+            <p class="text-sm text-slate-600">অবশিষ্ট অগ্রিম: <strong id="transModalAvailable" class="text-indigo-600 font-bold"></strong></p>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">কত টাকা ট্রান্সফার করবেন? (৳)</label>
+                <input type="number" id="transferAmountInput" min="1" class="w-full border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-teal-500 focus:outline-none" placeholder="টাকার পরিমাণ...">
+            </div>
+            <div class="flex space-x-3 pt-2">
+                <button onclick="submitMainBalanceTransfer()" class="flex-grow bg-teal-600 hover:bg-teal-700 text-white font-medium py-2.5 rounded-lg transition shadow-sm text-sm">
+                    নিশ্চিত করুন (Transfer)
+                </button>
+                <button onclick="closeTransferModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2.5 rounded-lg font-medium transition text-sm">
+                    বাতিল
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Password Verification Modal for Deletion -->
@@ -791,61 +983,246 @@
         <p class="text-blue-600 font-medium">This apps created Abu bokor Siddiq</p>
     </footer>
 
-    <!-- JavaScript Application Logic with Google Sheet Backend Sync -->
+    <!-- JavaScript Application Logic with Advanced Data Integrity & Advance Pay Feature -->
     <script>
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby-JHUENUU09IVsXgzCGRKGY0dH58CFVnjji89TVC-NIjI0CmrcdInOShQBFIWvKHBipw/exec";
         
         let transactions = [];
+        let advancePayments = [];
+        let advanceTransfers = [];
         let savedDriveLink = localStorage.getItem('rajshahi_air_gdrive') || '';
         
         let pendingAction = null; 
         let pendingParam = null;
+        let selectedAdvanceCustPhone = null;
+        let syncQueue = Promise.resolve();
+
+        // Helper: HTML Escape for XSS prevention
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // Helper: CSV cell safe escaping
+        function csvEscape(value) {
+            const str = String(value ?? '');
+            return `"${str.replace(/"/g, '""')}"`;
+        }
+
+        // Helper: Safe LocalStorage Load
+        function loadLocalDataSafely() {
+            try {
+                const rawTx = localStorage.getItem('rajshahi_air_transactions');
+                const rawAdv = localStorage.getItem('rajshahi_air_advance_payments');
+                const rawTrans = localStorage.getItem('rajshahi_air_advance_transfers');
+
+                let txData = rawTx ? JSON.parse(rawTx) : [];
+                let advData = rawAdv ? JSON.parse(rawAdv) : [];
+                let transData = rawTrans ? JSON.parse(rawTrans) : [];
+
+                transactions = Array.isArray(txData) ? normalizeTransactions(txData) : [];
+                advancePayments = Array.isArray(advData) ? normalizeAdvances(advData) : [];
+                advanceTransfers = Array.isArray(transData) ? normalizeTransfers(transData) : [];
+            } catch (error) {
+                console.error('Invalid LocalStorage data:', error);
+                transactions = [];
+                advancePayments = [];
+                advanceTransfers = [];
+            }
+        }
+
+        function saveToLocalStorageQuiet() {
+            try {
+                localStorage.setItem('rajshahi_air_transactions', JSON.stringify(transactions));
+                localStorage.setItem('rajshahi_air_advance_payments', JSON.stringify(advancePayments));
+                localStorage.setItem('rajshahi_air_advance_transfers', JSON.stringify(advanceTransfers));
+                updateSyncStatus('Synced', 'bg-emerald-600 text-white');
+            } catch (error) {
+                console.error('LocalStorage quota or save error:', error);
+                alert('লোকাল স্টোরেজ ফুল বা ত্রুটিপূর্ণ! ডেটা ব্রাউজারে সেভ হতে সমস্যা হচ্ছে।');
+                updateSyncStatus('Storage Error', 'bg-red-600 text-white');
+            }
+        }
+
+        function updateSyncStatus(text, cssClass) {
+            const badge = document.getElementById('syncStatusBadge');
+            if(badge) {
+                badge.className = `text-xs px-2.5 py-1 rounded-md border border-blue-700 ${cssClass}`;
+                badge.innerHTML = text === 'Syncing...' ? `<i class="fa-solid fa-rotate animate-spin mr-1"></i> ${text}` : text;
+            }
+        }
+
+        // Merge helper for transactions without losing local items
+        function mergeTransactions(localData, remoteData) {
+            const mergedMap = new Map();
+            if (Array.isArray(localData)) {
+                localData.forEach(tx => { if (tx && tx.id) mergedMap.set(String(tx.id), tx); });
+            }
+            if (Array.isArray(remoteData)) {
+                remoteData.forEach(tx => { 
+                    if (tx && tx.id && !mergedMap.has(String(tx.id))) {
+                        mergedMap.set(String(tx.id), tx);
+                    }
+                });
+            }
+            const result = Array.from(mergedMap.values());
+            result.sort((a, b) => {
+                const timeA = Number(String(a.id).split('_')[0]) || new Date(a.date || '').getTime() || 0;
+                const timeB = Number(String(b.id).split('_')[0]) || new Date(b.date || '').getTime() || 0;
+                return timeB - timeA;
+            });
+            return result;
+        }
+
+        // Validation & Normalization for Transactions
+        function normalizeTransactions(rawData) {
+            if (!Array.isArray(rawData)) return [];
+            let validList = [];
+            rawData.forEach(tx => {
+                if (!tx || typeof tx !== 'object') return;
+                const amt = Number(tx.amount);
+                if (!Number.isFinite(amt) || amt <= 0) return; // Reject negative or zero amount
+                
+                const paymentType = String(tx.paymentType || '').trim();
+                if (!['Paid', 'Due', 'Expense'].includes(paymentType)) return; // Strict paymentType check
+
+                const dateStr = String(tx.date || '').trim();
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return; // Strict YYYY-MM-DD date check
+
+                validList.push({
+                    id: tx.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : (Date.now() + '_' + Math.random())),
+                    date: dateStr,
+                    time: typeof tx.time === 'string' ? tx.time : '',
+                    category: typeof tx.category === 'string' ? tx.category : 'অন্যান্য',
+                    details: typeof tx.details === 'string' ? tx.details : '',
+                    custName: typeof tx.custName === 'string' ? tx.custName : 'সাধারণ গ্রাহক',
+                    custPhone: typeof tx.custPhone === 'string' ? tx.custPhone : 'প্রযোজ্য নয়',
+                    custAddress: typeof tx.custAddress === 'string' ? tx.custAddress : 'প্রযোজ্য নয়',
+                    staff: typeof tx.staff === 'string' ? tx.staff : 'Abu bokor',
+                    amount: amt,
+                    paymentType: paymentType,
+                    printPages: Number(tx.printPages) || 0,
+                    photocopyPages: Number(tx.photocopyPages) || 0,
+                    damagedPages: Number(tx.damagedPages) || 0
+                });
+            });
+            return validList;
+        }
+
+        function normalizeAdvances(rawData) {
+            if (!Array.isArray(rawData)) return [];
+            let valid = [];
+            rawData.forEach(adv => {
+                if (!adv || typeof adv !== 'object') return;
+                const amt = Number(adv.amount);
+                if (!Number.isFinite(amt) || amt <= 0) return;
+                const dateStr = String(adv.date || '').trim();
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return;
+                const name = String(adv.custName || '').trim();
+                if (!name) return;
+
+                valid.push({
+                    id: adv.id || ('adv_' + Date.now() + '_' + Math.random()),
+                    type: 'AdvancePay',
+                    date: dateStr,
+                    time: adv.time || '',
+                    custName: name,
+                    custPhone: adv.custPhone || 'প্রযোজ্য নয়',
+                    custAddress: adv.custAddress || 'প্রযোজ্য নয়',
+                    staff: adv.staff || 'Abu bokor',
+                    amount: amt,
+                    details: adv.details || 'অগ্রিম টাকা জমা',
+                    createdAt: adv.createdAt || Date.now()
+                });
+            });
+            return valid;
+        }
+
+        function normalizeTransfers(rawData) {
+            if (!Array.isArray(rawData)) return [];
+            let valid = [];
+            rawData.forEach(tr => {
+                if (!tr || typeof tr !== 'object') return;
+                const amt = Number(tr.amount);
+                if (!Number.isFinite(amt) || amt <= 0) return;
+                const dateStr = String(tr.date || '').trim();
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return;
+
+                valid.push({
+                    id: tr.id || ('trans_' + Date.now() + '_' + Math.random()),
+                    type: 'AdvanceTransfer',
+                    advanceId: tr.advanceId || '',
+                    custName: tr.custName || 'গ্রাহক',
+                    custPhone: tr.custPhone || '',
+                    amount: amt,
+                    date: dateStr,
+                    time: tr.time || '',
+                    details: tr.details || 'মূল ক্যাশে ট্রান্সফার'
+                });
+            });
+            return valid;
+        }
+
+        // Helper: Bangladesh Local Date String
+        function getLocalDateString() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
 
         // Initialize App & Login Check & Fetch Data from Google Sheet
         window.onload = function() {
             checkLoginState();
-            fetchGoogleSheetData();
         };
 
-        // Fetch data from Google Sheet
         async function fetchGoogleSheetData() {
+            loadLocalDataSafely();
+            updateSyncStatus('Syncing...', 'bg-blue-800 text-blue-200');
             try {
                 const response = await fetch(GOOGLE_SCRIPT_URL);
                 if(response.ok) {
                     const data = await response.json();
                     if(Array.isArray(data)) {
-                        transactions = data;
+                        const normalizedRemote = normalizeTransactions(data);
+                        transactions = mergeTransactions(transactions, normalizedRemote);
                         saveToLocalStorageQuiet();
                     }
                 } else {
-                    let localData = localStorage.getItem('rajshahi_air_transactions');
-                    if (localData) transactions = JSON.parse(localData);
+                    updateSyncStatus('Offline Mode', 'bg-amber-600 text-white');
                 }
             } catch(e) {
-                let localData = localStorage.getItem('rajshahi_air_transactions');
-                if (localData) transactions = JSON.parse(localData);
+                console.error('Google Sheet load failed, using local:', e);
+                updateSyncStatus('Offline Mode', 'bg-amber-600 text-white');
             }
-            refreshDashboard();
-            filterReports();
-            populateDueCustomers();
-            refreshExpenseTable();
+            initializeAppContent();
         }
 
-        // Sync data to Google Sheet
-        async function syncToGoogleSheet() {
+        function syncToGoogleSheet() {
             saveToLocalStorageQuiet();
-            try {
-                await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: {
-                        "Content-Type": "text/plain;charset=utf-8"
-                    },
-                    body: JSON.stringify(transactions)
-                });
-            } catch(e) {
-                // Offline fallback handled via LocalStorage
-            }
+            updateSyncStatus('Syncing...', 'bg-blue-800 text-blue-200');
+            syncQueue = syncQueue.then(async () => {
+                try {
+                    await fetch(GOOGLE_SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { "Content-Type": "text/plain;charset=utf-8" },
+                        body: JSON.stringify(transactions)
+                    });
+                    updateSyncStatus('Synced', 'bg-emerald-600 text-white');
+                } catch(e) {
+                    console.error('Google Sheet sync failed:', e);
+                    updateSyncStatus('Sync Failed (Local Safe)', 'bg-red-600 text-white');
+                }
+            }).catch(err => {
+                console.error('Sync queue error:', err);
+            });
+            return syncQueue;
         }
 
         function checkLoginState() {
@@ -854,7 +1231,7 @@
                 document.getElementById('loginOverlay').classList.add('hidden');
                 document.getElementById('mainAppWrapper').classList.remove('hidden');
                 document.getElementById('mainAppWrapper').classList.add('flex');
-                initializeAppContent();
+                fetchGoogleSheetData();
             } else {
                 document.getElementById('loginOverlay').classList.remove('hidden');
                 document.getElementById('mainAppWrapper').classList.add('hidden');
@@ -869,7 +1246,6 @@
             if (email === 'rattraining5@gmail.com' && password === 'Rat@9293') {
                 localStorage.setItem('rajshahi_air_loggedin', 'true');
                 checkLoginState();
-                fetchGoogleSheetData();
             } else {
                 alert('ভুল ইমেইল বা পাসওয়ার্ড! সঠিক তথ্য দিন।');
             }
@@ -880,7 +1256,6 @@
             checkLoginState();
         }
 
-        // Recovery Modal Functions
         function openRecoveryModal() {
             document.getElementById('recoveryCodeInput').value = '';
             document.getElementById('recoveryResultBox').classList.add('hidden');
@@ -909,17 +1284,26 @@
 
         function initializeAppContent() {
             updateCurrentDate();
-            document.getElementById('gdriveLink').value = savedDriveLink;
-            refreshDashboard();
-            filterReports(); 
-            populateDueCustomers();
-            refreshExpenseTable();
-            
-            const todayStr = new Date().toISOString().split('T')[0];
+            const driveInput = document.getElementById('gdriveLink');
+            if(driveInput) {
+                driveInput.value = savedDriveLink;
+                driveInput.oninput = function() {
+                    savedDriveLink = this.value;
+                    localStorage.setItem('rajshahi_air_gdrive', savedDriveLink);
+                };
+            }
+
+            const todayStr = getLocalDateString();
             document.getElementById('filterStartDate').value = todayStr;
             document.getElementById('filterEndDate').value = todayStr;
             document.getElementById('expenseStartDate').value = todayStr;
             document.getElementById('expenseEndDate').value = todayStr;
+
+            refreshDashboard();
+            filterReports(); 
+            populateDueCustomers();
+            refreshExpenseTable();
+            refreshAdvancePayUI();
         }
 
         function updateCurrentDate() {
@@ -928,7 +1312,6 @@
             document.getElementById('currentDateDisplay').innerText = now.toLocaleDateString('bn-BD', options);
         }
 
-        // Tab Switching
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.querySelectorAll('.tab-btn').forEach(el => {
@@ -938,28 +1321,25 @@
 
             document.getElementById(`tab-${tabId}`).classList.remove('hidden');
             const activeBtn = document.getElementById(`nav-${tabId}`);
-            activeBtn.classList.remove('text-slate-600', 'hover:bg-slate-100');
-            activeBtn.classList.add('bg-blue-600', 'text-white', 'shadow-sm');
+            if(activeBtn) {
+                activeBtn.classList.remove('text-slate-600', 'hover:bg-slate-100');
+                activeBtn.classList.add('bg-blue-600', 'text-white', 'shadow-sm');
+            }
 
-            if(tabId === 'dueCollection') {
-                populateDueCustomers();
-            }
-            if(tabId === 'expense') {
-                refreshExpenseTable();
-            }
-            if(tabId === 'reports') {
-                filterReports();
-            }
+            if(tabId === 'dueCollection') populateDueCustomers();
+            if(tabId === 'expense') refreshExpenseTable();
+            if(tabId === 'reports') filterReports();
+            if(tabId === 'advancePay') refreshAdvancePayUI();
         }
 
-        // Add Product Row in Products Tab
+        // Product Row Management
         function addProductRow() {
             const container = document.getElementById('productListContainer');
             const newRow = document.createElement('div');
             newRow.className = 'flex items-center space-x-2 product-row';
             newRow.innerHTML = `
                 <input type="text" placeholder="প্রোডাক্টের নাম" required class="flex-grow border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none prod-name">
-                <input type="number" placeholder="দাম (৳)" min="0" required class="w-32 border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none prod-price">
+                <input type="number" placeholder="দাম (৳)" min="1" required class="w-32 border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none prod-price">
                 <button type="button" onclick="removeProductRow(this)" class="bg-red-100 text-red-600 hover:bg-red-200 px-3 py-2.5 rounded-lg transition hidden remove-btn">
                     <i class="fa-solid fa-trash"></i>
                 </button>
@@ -977,20 +1357,17 @@
             const rows = document.querySelectorAll('.product-row');
             rows.forEach((row) => {
                 const removeBtn = row.querySelector('.remove-btn');
-                if (rows.length > 1) {
-                    removeBtn.classList.remove('hidden');
-                } else {
-                    removeBtn.classList.add('hidden');
-                }
+                if (rows.length > 1) removeBtn.classList.remove('hidden');
+                else removeBtn.classList.add('hidden');
             });
         }
 
-        // Handle General Transactions
+        // General Transactions Handler
         function handleTransaction(event, type) {
             event.preventDefault();
             const staff = document.getElementById('globalStaff').value;
+            const dateStr = getLocalDateString();
             const now = new Date();
-            const dateStr = now.toISOString().split('T')[0];
             const timeStr = now.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' });
 
             let details = '';
@@ -1010,7 +1387,6 @@
                 custName = document.getElementById('pcCustName').value.trim();
                 custPhone = document.getElementById('pcCustPhone').value.trim();
                 custAddress = document.getElementById('pcCustAddress').value.trim();
-                document.getElementById('formPhotocopy').reset();
             } 
             else if (type === 'print') {
                 printPagesCount = parseInt(document.getElementById('printPages').value) || 0;
@@ -1022,32 +1398,25 @@
                 custName = document.getElementById('printCustName').value.trim();
                 custPhone = document.getElementById('printCustPhone').value.trim();
                 custAddress = document.getElementById('printCustAddress').value.trim();
-                document.getElementById('formPrint').reset();
             } 
             else if (type === 'products') {
                 const rows = document.querySelectorAll('.product-row');
                 let prodSummary = [];
-                rows.forEach(row => {
-                    const pName = row.querySelector('.prod-name').value;
-                    const pPrice = parseFloat(row.querySelector('.prod-price').value);
+                for (let row of rows) {
+                    const pName = row.querySelector('.prod-name').value.trim();
+                    const pPrice = parseFloat(row.querySelector('.prod-price').value) || 0;
+                    if (!pName || pPrice <= 0) {
+                        alert('সব প্রোডাক্টের নাম এবং সঠিক দাম দিন।');
+                        return;
+                    }
                     amount += pPrice;
                     prodSummary.push(`${pName} (৳${pPrice})`);
-                });
+                }
                 paymentType = document.getElementById('prodPaymentType').value;
                 details = `প্রোডাক্ট বিক্রি: ${prodSummary.join(', ')}`;
                 custName = document.getElementById('prodCustName').value.trim();
                 custPhone = document.getElementById('prodCustPhone').value.trim();
                 custAddress = document.getElementById('prodCustAddress').value.trim();
-                document.getElementById('formProducts').reset();
-                document.getElementById('productListContainer').innerHTML = `
-                    <div class="flex items-center space-x-2 product-row">
-                        <input type="text" placeholder="প্রোডাক্টের নাম" required class="flex-grow border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none prod-name">
-                        <input type="number" placeholder="দাম (৳)" min="0" required class="w-32 border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none prod-price">
-                        <button type="button" onclick="removeProductRow(this)" class="bg-red-100 text-red-600 hover:bg-red-200 px-3 py-2.5 rounded-lg transition hidden remove-btn">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </div>
-                `;
             }
             else if (type === 'banking') {
                 const operator = document.getElementById('bankOperator').value;
@@ -1058,7 +1427,11 @@
                 custName = document.getElementById('bankCustName').value.trim();
                 custPhone = document.getElementById('bankCustPhone').value.trim();
                 custAddress = document.getElementById('bankCustAddress').value.trim();
-                document.getElementById('formBanking').reset();
+            }
+
+            if (!Number.isFinite(amount) || amount <= 0) {
+                alert('টাকার পরিমাণ শূন্য বা নেগেটিভ হতে পারবে না। সঠিক পরিমাণ দিন।');
+                return;
             }
 
             if (paymentType === 'Due' && (!custName || !custPhone)) {
@@ -1067,7 +1440,7 @@
             }
 
             const transactionObj = {
-                id: Date.now(),
+                id: Date.now() + '_' + Math.random().toString(36).substr(2, 5),
                 date: dateStr,
                 time: timeStr,
                 category: getCategoryName(type),
@@ -1076,7 +1449,7 @@
                 custPhone: custPhone || 'প্রযোজ্য নয়',
                 custAddress: custAddress || 'প্রযোজ্য নয়',
                 staff: staff,
-                amount: amount,
+                amount: Number(amount) || 0,
                 paymentType: paymentType,
                 printPages: printPagesCount,
                 photocopyPages: photocopyPagesCount,
@@ -1089,23 +1462,44 @@
             filterReports();
             populateDueCustomers();
 
+            if (type === 'photocopy') document.getElementById('formPhotocopy').reset();
+            else if (type === 'print') document.getElementById('formPrint').reset();
+            else if (type === 'products') {
+                document.getElementById('formProducts').reset();
+                document.getElementById('productListContainer').innerHTML = `
+                    <div class="flex items-center space-x-2 product-row">
+                        <input type="text" placeholder="প্রোডাক্টের নাম" required class="flex-grow border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none prod-name">
+                        <input type="number" placeholder="দাম (৳)" min="1" required class="w-32 border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none prod-price">
+                        <button type="button" onclick="removeProductRow(this)" class="bg-red-100 text-red-600 hover:bg-red-200 px-3 py-2.5 rounded-lg transition hidden remove-btn">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+            }
+            else if (type === 'banking') document.getElementById('formBanking').reset();
+
             alert('সফলভাবে এন্ট্রি সংরক্ষিত হয়েছে!');
         }
 
-        // Handle Expense Entry
+        // Expense Handler
         function handleExpense(event) {
             event.preventDefault();
             const staff = document.getElementById('globalStaff').value;
+            const dateStr = getLocalDateString();
             const now = new Date();
-            const dateStr = now.toISOString().split('T')[0];
             const timeStr = now.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' });
 
-            const reason = document.getElementById('expenseReason').value;
+            const reason = document.getElementById('expenseReason').value.trim();
             const amount = parseFloat(document.getElementById('expenseAmount').value);
-            const note = document.getElementById('expenseNote').value;
+            const note = document.getElementById('expenseNote').value.trim();
+
+            if (!Number.isFinite(amount) || amount <= 0) {
+                alert('খরচের পরিমাণ শূন্য বা নেগেটিভ হতে পারবে না। সঠিক পরিমাণ দিন।');
+                return;
+            }
 
             const expenseObj = {
-                id: Date.now(),
+                id: Date.now() + '_' + Math.random().toString(36).substr(2, 5),
                 date: dateStr,
                 time: timeStr,
                 category: 'দোকানের খরচ',
@@ -1114,7 +1508,7 @@
                 custPhone: '-',
                 custAddress: '-',
                 staff: staff,
-                amount: amount,
+                amount: Number(amount) || 0,
                 paymentType: 'Expense',
                 printPages: 0,
                 photocopyPages: 0,
@@ -1142,11 +1536,257 @@
             }
         }
 
-        function saveToLocalStorageQuiet() {
-            localStorage.setItem('rajshahi_air_transactions', JSON.stringify(transactions));
+        // ================= ADVANCE PAY FEATURE LOGIC =================
+        function handleAdvancePaySubmit(event) {
+            event.preventDefault();
+            const staff = document.getElementById('globalStaff').value;
+            const dateStr = getLocalDateString();
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' });
+
+            const custName = document.getElementById('advCustName').value.trim();
+            const custPhone = document.getElementById('advCustPhone').value.trim() || 'প্রযোজ্য নয়';
+            const custAddress = document.getElementById('advCustAddress').value.trim() || 'প্রযোজ্য নয়';
+            const amount = parseFloat(document.getElementById('advAmount').value);
+            const details = document.getElementById('advDetails').value.trim() || 'অগ্রিম টাকা গ্রহণ';
+
+            if (!custName || !Number.isFinite(amount) || amount <= 0) {
+                alert('গ্রাহকের নাম এবং সঠিক অগ্রিম পরিমাণ (শূন্য বা নেগেটিভ নয়) দিন।');
+                return;
+            }
+
+            const advObj = {
+                id: 'adv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                type: 'AdvancePay',
+                date: dateStr,
+                time: timeStr,
+                custName: custName,
+                custPhone: custPhone,
+                custAddress: custAddress,
+                staff: staff,
+                amount: amount,
+                details: details,
+                createdAt: Date.now()
+            };
+
+            advancePayments.unshift(advObj);
+            saveToLocalStorageQuiet();
+            refreshAdvancePayUI();
+            refreshDashboard();
+            document.getElementById('formAdvancePay').reset();
+            alert('গ্রাহকের অগ্রিম টাকা সফলভাবে জমা হয়েছে!');
         }
 
-        // Expense Filter & Table Management
+        function getTotalAdvanceBalance() {
+            let totalAdv = 0;
+            advancePayments.forEach(a => totalAdv += (Number(a.amount) || 0));
+            let totalTrans = 0;
+            advanceTransfers.forEach(t => totalTrans += (Number(t.amount) || 0));
+            return Math.max(0, totalAdv - totalTrans);
+        }
+
+        function getCustomerAdvanceDetails(phoneOrName) {
+            let advances = advancePayments.filter(a => (a.custPhone && a.custPhone === phoneOrName) || (a.custName === phoneOrName));
+            let transfers = advanceTransfers.filter(t => (t.custPhone && t.custPhone === phoneOrName) || (t.custName === phoneOrName));
+            
+            let totalAdv = advances.reduce((sum, a) => sum + (Number(a.amount) || 0), 0);
+            let totalTrans = transfers.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+            let remaining = Math.max(0, totalAdv - totalTrans);
+
+            return { totalAdv, totalTrans, remaining, advances, transfers };
+        }
+
+        function refreshAdvancePayUI() {
+            let custMap = new Map();
+            advancePayments.forEach(a => {
+                let key = a.custPhone && a.custPhone !== 'প্রযোজ্য নয়' ? a.custPhone : a.custName;
+                if(!custMap.has(key)) {
+                    custMap.set(key, { name: a.custName, phone: a.custPhone, lastDate: a.date });
+                } else {
+                    let item = custMap.get(key);
+                    if(a.date > item.lastDate) item.lastDate = a.date;
+                }
+            });
+
+            let totalAdvSum = 0;
+            advancePayments.forEach(a => totalAdvSum += Number(a.amount) || 0);
+            let totalTransSum = 0;
+            advanceTransfers.forEach(t => totalTransSum += Number(t.amount) || 0);
+            let remainingTotal = Math.max(0, totalAdvSum - totalTransSum);
+
+            document.getElementById('advSumTotalBalance').innerText = `৳ ${remainingTotal}`;
+            document.getElementById('advSumCustCount').innerText = `${custMap.size} জন`;
+            document.getElementById('advSumTransferred').innerText = `৳ ${totalTransSum}`;
+            document.getElementById('advSumRecords').innerText = `${advancePayments.length} টি`;
+
+            let tableHTML = '';
+            custMap.forEach((val, key) => {
+                let details = getCustomerAdvanceDetails(key);
+                tableHTML += `
+                    <tr class="hover:bg-slate-50 transition border-b border-slate-50 cursor-pointer" onclick="openCustomerAdvanceDetail('${escapeHtml(key)}')">
+                        <td class="p-3">
+                            <span class="font-bold text-slate-800">${escapeHtml(val.name)}</span>
+                            <span class="text-xs text-slate-500 block">${escapeHtml(val.phone)}</span>
+                        </td>
+                        <td class="p-3 text-right font-medium text-slate-700">৳ ${details.totalAdv}</td>
+                        <td class="p-3 text-right font-medium text-teal-600">৳ ${details.totalTrans}</td>
+                        <td class="p-3 text-right font-bold text-indigo-600">৳ ${details.remaining}</td>
+                        <td class="p-3 text-slate-600 text-xs">${escapeHtml(val.lastDate)}</td>
+                        <td class="p-3 text-center" onclick="event.stopPropagation()">
+                            <button onclick="openCustomerAdvanceDetail('${escapeHtml(key)}')" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1.5 rounded-lg text-xs font-medium transition">
+                                বিবরণী
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            if(tableHTML === '') {
+                tableHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400">কোনো অগ্রিম জমার তথ্য পাওয়া যায়নি।</td></tr>`;
+            }
+
+            const tbody = document.getElementById('advanceCustomerTableBody');
+            if(tbody) tbody.innerHTML = tableHTML;
+        }
+
+        function openCustomerAdvanceDetail(key) {
+            selectedAdvanceCustPhone = key;
+            let details = getCustomerAdvanceDetails(key);
+            let sampleCust = advancePayments.find(a => (a.custPhone === key) || (a.custName === key));
+            let name = sampleCust ? sampleCust.name : key;
+
+            document.getElementById('modalCustTitle').innerText = `${name} - অগ্রিম বিবরণী`;
+            document.getElementById('mTotalAdv').innerText = `৳ ${details.totalAdv}`;
+            document.getElementById('mTotalTrans').innerText = `৳ ${details.totalTrans}`;
+            document.getElementById('mTotalRem').innerText = `৳ ${details.remaining}`;
+
+            let historyHTML = '';
+            details.advances.forEach(a => {
+                historyHTML += `
+                    <tr class="border-b border-slate-100">
+                        <td class="p-2.5">${escapeHtml(a.date)} <span class="text-xs text-slate-400 block">${escapeHtml(a.time)}</span></td>
+                        <td class="p-2.5 text-slate-700">অগ্রিম জমা: ${escapeHtml(a.details)}</td>
+                        <td class="p-2.5 text-right font-bold text-indigo-600">+ ৳ ${a.amount}</td>
+                        <td class="p-2.5 text-center">
+                            <button onclick="deleteAdvanceRecord('${a.id}')" class="text-red-500 hover:text-red-700 p-1" title="মুছে ফেলুন">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            details.transfers.forEach(t => {
+                historyHTML += `
+                    <tr class="border-b border-slate-100 bg-teal-50/50">
+                        <td class="p-2.5">${escapeHtml(t.date)} <span class="text-xs text-slate-400 block">${escapeHtml(t.time)}</span></td>
+                        <td class="p-2.5 text-teal-800">মূল ক্যাশে ট্রান্সফার: ${escapeHtml(t.details)}</td>
+                        <td class="p-2.5 text-right font-bold text-teal-700">- ৳ ${t.amount}</td>
+                        <td class="p-2.5 text-center">
+                            <span class="text-xs text-slate-400">Transferred</span>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            if(historyHTML === '') {
+                historyHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-400">কোনো ইতিহাস নেই।</td></tr>`;
+            }
+
+            document.getElementById('modalHistoryBody').innerHTML = historyHTML;
+            document.getElementById('advanceDetailModal').classList.remove('hidden');
+        }
+
+        function closeAdvanceDetailModal() {
+            document.getElementById('advanceDetailModal').classList.add('hidden');
+            selectedAdvanceCustPhone = null;
+        }
+
+        function openTransferModal() {
+            if(!selectedAdvanceCustPhone) return;
+            let details = getCustomerAdvanceDetails(selectedAdvanceCustPhone);
+            let sampleCust = advancePayments.find(a => (a.custPhone === selectedAdvanceCustPhone) || (a.custName === selectedAdvanceCustPhone));
+            let name = sampleCust ? sampleCust.custName : selectedAdvanceCustPhone;
+
+            document.getElementById('transModalCustName').innerText = name;
+            document.getElementById('transModalAvailable').innerText = `৳ ${details.remaining}`;
+            document.getElementById('transferAmountInput').value = details.remaining;
+            document.getElementById('transferModal').classList.remove('hidden');
+        }
+
+        function closeTransferModal() {
+            document.getElementById('transferModal').classList.add('hidden');
+        }
+
+        function submitMainBalanceTransfer() {
+            if(!selectedAdvanceCustPhone) return;
+            let amount = parseFloat(document.getElementById('transferAmountInput').value);
+            let details = getCustomerAdvanceDetails(selectedAdvanceCustPhone);
+
+            if(!Number.isFinite(amount) || amount <= 0) {
+                alert('সঠিক পরিমাণ টাকা লিখুন।');
+                return;
+            }
+
+            if(amount > details.remaining) {
+                alert(`অবশিষ্ট অগ্রিম (৳ ${details.remaining}) এর বেশি টাকা ট্রান্সফার করা যাবে না!`);
+                return;
+            }
+
+            let sampleCust = advancePayments.find(a => (a.custPhone === selectedAdvanceCustPhone) || (a.custName === selectedAdvanceCustPhone));
+            let name = sampleCust ? sampleCust.custName : selectedAdvanceCustPhone;
+            let phone = sampleCust ? sampleCust.custPhone : 'প্রযোজ্য নয়';
+
+            const dateStr = getLocalDateString();
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' });
+
+            const transObj = {
+                id: 'trans_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                type: 'AdvanceTransfer',
+                advanceId: sampleCust ? sampleCust.id : '',
+                custName: name,
+                custPhone: phone,
+                amount: amount,
+                date: dateStr,
+                time: timeStr,
+                details: `গ্রাহক ${name}-এর অগ্রিম থেকে ক্যাশে স্থানান্তর`
+            };
+
+            advanceTransfers.unshift(transObj);
+            saveToLocalStorageQuiet();
+            refreshAdvancePayUI();
+            refreshDashboard();
+            closeTransferModal();
+            openCustomerAdvanceDetail(selectedAdvanceCustPhone);
+            alert('সফলভাবে মূল ক্যাশে টাকা ট্রান্সফার করা হয়েছে!');
+        }
+
+        function deleteAdvanceRecord(advId) {
+            let adv = advancePayments.find(a => a.id === advId);
+            if(!adv) return;
+
+            // Check if transferred portion exists for this customer
+            let details = getCustomerAdvanceDetails(adv.custPhone && adv.custPhone !== 'প্রযোজ্য নয়' ? adv.custPhone : adv.custName);
+            if(details.totalTrans > 0) {
+                alert('এই গ্রাহকের কিছু অগ্রিম টাকা ইতিমধ্যেই মূল ক্যাশে ট্রান্সফার করা হয়েছে। সম্পূর্ণ রেকর্ড ডিলিট করা সম্ভব নয়।');
+                return;
+            }
+
+            if(confirm('আপনি কি নিশ্চিতভাবে এই অগ্রিম এন্ট্রি মুছে ফেলতে চান?')) {
+                advancePayments = advancePayments.filter(a => a.id !== advId);
+                saveToLocalStorageQuiet();
+                refreshAdvancePayUI();
+                refreshDashboard();
+                if(selectedAdvanceCustPhone) {
+                    openCustomerAdvanceDetail(selectedAdvanceCustPhone);
+                }
+                alert('সফলভাবে অগ্রিম এন্ট্রি ডিলিট করা হয়েছে!');
+            }
+        }
+        // ================= END ADVANCE PAY FEATURE =================
+
+        // Expense Table & Filtering
         function refreshExpenseTable(filteredList = null) {
             const expenseList = filteredList || transactions.filter(tx => tx.category === 'দোকানের খরচ');
             let tableHTML = '';
@@ -1154,15 +1794,15 @@
 
             expenseList.forEach(tx => {
                 if(tx.category === 'দোকানের খরচ') {
-                    totalExpense += tx.amount;
+                    totalExpense += Number(tx.amount) || 0;
                     tableHTML += `
                         <tr class="hover:bg-slate-50 transition border-b border-slate-50">
-                            <td class="p-3 font-medium text-slate-600">${tx.date} <span class="text-xs text-slate-400 block">${tx.time}</span></td>
-                            <td class="p-3 text-slate-700">${tx.details}</td>
-                            <td class="p-3 text-slate-600">${tx.staff}</td>
-                            <td class="p-3 text-right font-bold text-red-600">৳ ${tx.amount}</td>
+                            <td class="p-3 font-medium text-slate-600">${escapeHtml(tx.date)} <span class="text-xs text-slate-400 block">${escapeHtml(tx.time)}</span></td>
+                            <td class="p-3 text-slate-700">${escapeHtml(tx.details)}</td>
+                            <td class="p-3 text-slate-600">${escapeHtml(tx.staff)}</td>
+                            <td class="p-3 text-right font-bold text-red-600">৳ ${Number(tx.amount) || 0}</td>
                             <td class="p-3 text-center">
-                                <button onclick="promptDeleteTransaction(${tx.id})" class="text-red-500 hover:text-red-700 p-1.5 rounded-lg transition" title="মুছে ফেলুন">
+                                <button onclick="promptDeleteTransaction('${tx.id}')" class="text-red-500 hover:text-red-700 p-1.5 rounded-lg transition" title="মুছে ফেলুন">
                                     <i class="fa-solid fa-trash-can"></i>
                                 </button>
                             </td>
@@ -1194,7 +1834,7 @@
         }
 
         function resetExpenseFilter() {
-            const todayStr = new Date().toISOString().split('T')[0];
+            const todayStr = getLocalDateString();
             document.getElementById('expenseStartDate').value = todayStr;
             document.getElementById('expenseEndDate').value = todayStr;
             document.getElementById('expenseFilterTitle').innerText = `সকল খরচের তালিকা`;
@@ -1204,27 +1844,28 @@
         // Due Collection Management
         function populateDueCustomers() {
             const selectEl = document.getElementById('dueCustomerSelect');
+            if(!selectEl) return;
             selectEl.innerHTML = '<option value="">-- গ্রাহক সিলেক্ট করুন --</option>';
             
             let dueMap = {};
             transactions.forEach(tx => {
-                if(tx.paymentType === 'Due' && tx.custPhone && tx.custPhone.trim() !== '' && tx.custPhone !== 'প্রযোজ্য নয়') {
-                    let phone = tx.custPhone.trim();
+                if(tx.paymentType === 'Due' && tx.custPhone && String(tx.custPhone).trim() !== '' && tx.custPhone !== 'প্রযোজ্য নয়') {
+                    let phone = String(tx.custPhone).trim();
                     if(!dueMap[phone]) {
                         dueMap[phone] = { name: tx.custName || 'অজানা গ্রাহক', phone: phone, totalDue: 0 };
                     }
                     if(tx.custName && tx.custName !== 'সাধারণ গ্রাহক' && tx.custName !== 'প্রযোজ্য নয়') {
                         dueMap[phone].name = tx.custName;
                     }
-                    dueMap[phone].totalDue += tx.amount;
+                    dueMap[phone].totalDue += Number(tx.amount) || 0;
                 }
             });
 
             transactions.forEach(tx => {
                 if(tx.category === 'বাকি আদায়' && tx.custPhone) {
-                    let phone = tx.custPhone.trim();
+                    let phone = String(tx.custPhone).trim();
                     if(dueMap[phone]) {
-                        dueMap[phone].totalDue -= tx.amount;
+                        dueMap[phone].totalDue -= Number(tx.amount) || 0;
                     }
                 }
             });
@@ -1233,7 +1874,7 @@
                 if(dueMap[phone].totalDue > 0) {
                     let opt = document.createElement('option');
                     opt.value = phone;
-                    opt.textContent = `${dueMap[phone].name} (${phone}) - বকেয়া: ৳${dueMap[phone].totalDue}`;
+                    opt.textContent = `${escapeHtml(dueMap[phone].name)} (${phone}) - বকেয়া: ৳${dueMap[phone].totalDue}`;
                     selectEl.appendChild(opt);
                 }
             }
@@ -1250,12 +1891,12 @@
             let name = '';
             let totalDue = 0;
             transactions.forEach(tx => {
-                if(tx.custPhone && tx.custPhone.trim() === phone) {
+                if(tx.custPhone && String(tx.custPhone).trim() === phone) {
                     if(tx.custName && tx.custName !== 'সাধারণ গ্রাহক' && tx.custName !== 'প্রযোজ্য নয়') {
                         name = tx.custName;
                     }
-                    if(tx.paymentType === 'Due') totalDue += tx.amount;
-                    if(tx.category === 'বাকি আদায়') totalDue -= tx.amount;
+                    if(tx.paymentType === 'Due') totalDue += Number(tx.amount) || 0;
+                    if(tx.category === 'বাকি আদায়') totalDue -= Number(tx.amount) || 0;
                 }
             });
 
@@ -1273,17 +1914,31 @@
             const payAmount = parseFloat(document.getElementById('payDueAmount').value);
             const staff = document.getElementById('globalStaff').value;
 
-            if(!phone || isNaN(payAmount) || payAmount <= 0) {
-                alert('সঠিক পরিমাণ টাকা লিখুন।');
+            if(!phone || !Number.isFinite(payAmount) || payAmount <= 0) {
+                alert('সঠিক পরিমাণ টাকা লিখুন যা শূন্য বা নেগেটিভ নয়।');
+                return;
+            }
+
+            let currentDue = 0;
+            transactions.forEach(tx => {
+                if(tx.custPhone && String(tx.custPhone).trim() === phone) {
+                    if(tx.paymentType === 'Due') currentDue += Number(tx.amount) || 0;
+                    if(tx.category === 'বাকি আদায়') currentDue -= Number(tx.amount) || 0;
+                }
+            });
+
+            if (payAmount > currentDue) {
+                alert(`বর্তমান বকেয়া ৳ ${currentDue}। এর বেশি টাকা গ্রহণ করা যাবে না।`);
                 return;
             }
 
             let name = document.getElementById('lblDueName').innerText;
-            let now = new Date();
+            const dateStr = getLocalDateString();
+            const now = new Date();
             
             const dueCollectionObj = {
-                id: Date.now(),
-                date: now.toISOString().split('T')[0],
+                id: Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                date: dateStr,
                 time: now.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' }),
                 category: 'বাকি আদায়',
                 details: `বাকি টাকা পরিশোধ গ্রহণ`,
@@ -1291,7 +1946,7 @@
                 custPhone: phone,
                 custAddress: 'প্রযোজ্য নয়',
                 staff: staff,
-                amount: payAmount,
+                amount: Number(payAmount) || 0,
                 paymentType: 'Paid',
                 printPages: 0,
                 photocopyPages: 0,
@@ -1307,9 +1962,9 @@
             alert('বাকি টাকা সফলভাবে গ্রহণ করা হয়েছে!');
         }
 
-        // Dashboard & Report Refresh Functions
+        // Dashboard & Report Refresh Functions (Accounting Rule compliant)
         function refreshDashboard() {
-            const todayStr = new Date().toISOString().split('T')[0];
+            const todayStr = getLocalDateString();
             const currentMonthPrefix = todayStr.substring(0, 7);
 
             let todayTotalSales = 0;
@@ -1321,64 +1976,105 @@
             let bortomanCash = 0;
             let recentHTML = '';
 
+            // Current Cash: Paid transactions + Due collections + Transferred advance - Expenses
             transactions.forEach(tx => {
+                const amt = Number(tx.amount) || 0;
                 if (tx.paymentType === 'Paid' && tx.category !== 'দোকানের খরচ') {
-                    bortomanCash += tx.amount;
+                    bortomanCash += amt;
                 }
                 if (tx.category === 'দোকানের খরচ') {
-                    bortomanCash -= tx.amount;
+                    bortomanCash -= amt;
                 }
             });
 
+            // Add transferred advance cash to main cash
+            advanceTransfers.forEach(t => {
+                bortomanCash += (Number(t.amount) || 0);
+            });
+
+            // Overall Outstanding Due Calculation
             let activeDueMap = {};
             transactions.forEach(tx => {
-                if(tx.paymentType === 'Due' && tx.custPhone && tx.custPhone.trim() !== '' && tx.custPhone !== 'প্রযোজ্য নয়') {
-                    let phone = tx.custPhone.trim();
-                    activeDueMap[phone] = (activeDueMap[phone] || 0) + tx.amount;
+                const amt = Number(tx.amount) || 0;
+                if(tx.paymentType === 'Due' && tx.custPhone && String(tx.custPhone).trim() !== '' && tx.custPhone !== 'প্রযোজ্য নয়') {
+                    let phone = String(tx.custPhone).trim();
+                    activeDueMap[phone] = (activeDueMap[phone] || 0) + amt;
                 }
                 if(tx.category === 'বাকি আদায়' && tx.custPhone) {
-                    let phone = tx.custPhone.trim();
-                    activeDueMap[phone] = (activeDueMap[phone] || 0) - tx.amount;
+                    let phone = String(tx.custPhone).trim();
+                    activeDueMap[phone] = (activeDueMap[phone] || 0) - amt;
                 }
             });
             for(let phone in activeDueMap) {
-                if(activeDueMap[phone] > 0) {
-                    totalDueAmount += activeDueMap[phone];
+                if(activeDueMap[phone] > 0) totalDueAmount += activeDueMap[phone];
+            }
+
+            // Current Month Net Due Calculation (Due - Collection)
+            let monthDueMap = {};
+            transactions.forEach(tx => {
+                const amt = Number(tx.amount) || 0;
+                if(tx.date && String(tx.date).startsWith(currentMonthPrefix)) {
+                    if(tx.paymentType === 'Due' && tx.custPhone && String(tx.custPhone).trim() !== '' && tx.custPhone !== 'প্রযোজ্য নয়') {
+                        let phone = String(tx.custPhone).trim();
+                        monthDueMap[phone] = (monthDueMap[phone] || 0) + amt;
+                    }
+                    if(tx.category === 'বাকি আদায়' && tx.custPhone) {
+                        let phone = String(tx.custPhone).trim();
+                        monthDueMap[phone] = (monthDueMap[phone] || 0) - amt;
+                    }
                 }
+            });
+            for(let phone in monthDueMap) {
+                if(monthDueMap[phone] > 0) monthDue += monthDueMap[phone];
+            }
+
+            // Today's Net Due Calculation (Due - Collection)
+            let todayDueMap = {};
+            transactions.forEach(tx => {
+                const amt = Number(tx.amount) || 0;
+                if(tx.date === todayStr) {
+                    if(tx.paymentType === 'Due' && tx.custPhone && String(tx.custPhone).trim() !== '' && tx.custPhone !== 'প্রযোজ্য নয়') {
+                        let phone = String(tx.custPhone).trim();
+                        todayDueMap[phone] = (todayDueMap[phone] || 0) + amt;
+                    }
+                    if(tx.category === 'বাকি আদায়' && tx.custPhone) {
+                        let phone = String(tx.custPhone).trim();
+                        todayDueMap[phone] = (todayDueMap[phone] || 0) - amt;
+                    }
+                }
+            });
+            for(let phone in todayDueMap) {
+                if(todayDueMap[phone] > 0) todayDue += todayDueMap[phone];
             }
 
             transactions.forEach((tx, index) => {
+                const amt = Number(tx.amount) || 0;
                 if (tx.date === todayStr) {
+                    // Today's Sales: Paid transactions excluding expenses & due collections
                     if (tx.paymentType === 'Paid' && tx.category !== 'দোকানের খরচ' && tx.category !== 'বাকি আদায়') {
-                        todayTotalSales += tx.amount;
-                    }
-                    if (tx.paymentType === 'Due' && tx.category !== 'দোকানের খরচ' && tx.category !== 'বাকি আদায়') {
-                        todayDue += tx.amount;
+                        todayTotalSales += amt;
                     }
                     if (tx.category === 'দোকানের খরচ') {
-                        todayExpense += tx.amount;
+                        todayExpense += amt;
                     }
                     if (index < 5) {
                         let badgeColor = tx.paymentType === 'Due' ? 'bg-amber-50 text-amber-700' : (tx.category === 'দোকানের খরচ' ? 'bg-red-50 text-red-700' : 'bg-blue-50 text-blue-700');
                         recentHTML += `
                             <tr class="hover:bg-slate-50 transition border-b border-slate-50">
-                                <td class="p-3 font-medium text-slate-600">${tx.time}</td>
-                                <td class="p-3"><span class="${badgeColor} px-2.5 py-1 rounded-full text-xs font-semibold">${tx.category}</span></td>
-                                <td class="p-3 text-slate-700">${tx.details}</td>
-                                <td class="p-3 text-slate-600">${tx.custName}</td>
-                                <td class="p-3"><span class="text-xs font-bold ${tx.paymentType==='Due'?'text-amber-600':'text-emerald-600'}">${tx.paymentType}</span></td>
-                                <td class="p-3 text-right font-bold text-slate-800">৳ ${tx.amount}</td>
+                                <td class="p-3 font-medium text-slate-600">${escapeHtml(tx.time)}</td>
+                                <td class="p-3"><span class="${badgeColor} px-2.5 py-1 rounded-full text-xs font-semibold">${escapeHtml(tx.category)}</span></td>
+                                <td class="p-3 text-slate-700">${escapeHtml(tx.details)}</td>
+                                <td class="p-3 text-slate-600">${escapeHtml(tx.custName)}</td>
+                                <td class="p-3"><span class="text-xs font-bold ${tx.paymentType==='Due'?'text-amber-600':'text-emerald-600'}">${escapeHtml(tx.paymentType)}</span></td>
+                                <td class="p-3 text-right font-bold text-slate-800">৳ ${amt}</td>
                             </tr>
                         `;
                     }
                 }
 
-                if (tx.date.startsWith(currentMonthPrefix)) {
-                    if (tx.paymentType === 'Paid' && tx.category !== 'দোকানের খরচ') {
-                        monthSales += tx.amount;
-                    }
-                    if (tx.paymentType === 'Due' && tx.category !== 'দোকানের খরচ') {
-                        monthDue += tx.amount;
+                if (tx.date && String(tx.date).startsWith(currentMonthPrefix)) {
+                    if (tx.paymentType === 'Paid' && tx.category !== 'দোকানের খরচ' && tx.category !== 'বাকি আদায়') {
+                        monthSales += amt;
                     }
                 }
             });
@@ -1388,6 +2084,7 @@
             }
 
             document.getElementById('dashBortomanCash').innerText = `৳ ${bortomanCash}`;
+            document.getElementById('dashAdvanceBalance').innerText = `৳ ${getTotalAdvanceBalance()}`;
             document.getElementById('dashTodaySales').innerText = `৳ ${todayTotalSales}`;
             document.getElementById('dashTodayDue').innerText = `৳ ${todayDue}`;
             document.getElementById('dashTodayExpense').innerText = `৳ ${todayExpense}`;
@@ -1401,9 +2098,7 @@
             const startDate = document.getElementById('filterStartDate').value;
             const endDate = document.getElementById('filterEndDate').value;
 
-            if (!startDate || !endDate) {
-                return;
-            }
+            if (!startDate || !endDate) return;
 
             const filtered = transactions.filter(tx => tx.date >= startDate && tx.date <= endDate);
             
@@ -1416,36 +2111,55 @@
             let tableHTML = '';
 
             filtered.forEach(tx => {
+                const amt = Number(tx.amount) || 0;
                 if (tx.paymentType === 'Paid' && tx.category !== 'দোকানের খরচ') {
-                    totalIncome += tx.amount;
+                    totalIncome += amt;
                 }
                 if (tx.paymentType === 'Due' && tx.category !== 'দোকানের খরচ' && tx.category !== 'বাকি আদায়') {
-                    totalDue += tx.amount;
+                    totalDue += amt;
                 }
                 if (tx.category === 'দোকানের খরচ') {
-                    totalExpense += tx.amount;
+                    totalExpense += amt;
                 }
-                if (tx.printPages) printPages += tx.printPages;
-                if (tx.photocopyPages) photocopyPages += tx.photocopyPages;
-                if (tx.damagedPages) damagedPages += tx.damagedPages;
+                if (tx.printPages) printPages += Number(tx.printPages) || 0;
+                if (tx.photocopyPages) photocopyPages += Number(tx.photocopyPages) || 0;
+                if (tx.damagedPages) damagedPages += Number(tx.damagedPages) || 0;
 
                 let badgeColor = tx.paymentType === 'Due' ? 'bg-amber-50 text-amber-700' : (tx.category === 'দোকানের খরচ' ? 'bg-red-50 text-red-700' : 'bg-slate-100 text-slate-700');
                 tableHTML += `
                     <tr class="hover:bg-slate-50 transition border-b border-slate-50">
-                        <td class="p-3 font-medium text-slate-600">${tx.date} <span class="text-xs text-slate-400 block">${tx.time}</span></td>
-                        <td class="p-3"><span class="${badgeColor} px-2.5 py-1 rounded-full text-xs font-semibold">${tx.category}</span></td>
-                        <td class="p-3 text-slate-700">${tx.details}</td>
-                        <td class="p-3 text-slate-600">${tx.custName}<span class="text-xs text-slate-400 block">${tx.custPhone}</span></td>
-                        <td class="p-3 font-semibold text-xs ${tx.paymentType==='Due'?'text-amber-600':'text-emerald-600'}">${tx.paymentType}</td>
-                        <td class="p-3 text-slate-600">${tx.staff}</td>
-                        <td class="p-3 text-right font-bold text-slate-800">৳ ${tx.amount}</td>
+                        <td class="p-3 font-medium text-slate-600">${escapeHtml(tx.date)} <span class="text-xs text-slate-400 block">${escapeHtml(tx.time)}</span></td>
+                        <td class="p-3"><span class="${badgeColor} px-2.5 py-1 rounded-full text-xs font-semibold">${escapeHtml(tx.category)}</span></td>
+                        <td class="p-3 text-slate-700">${escapeHtml(tx.details)}</td>
+                        <td class="p-3 text-slate-600">${escapeHtml(tx.custName)}<span class="text-xs text-slate-400 block">${escapeHtml(tx.custPhone)}</span></td>
+                        <td class="p-3 font-semibold text-xs ${tx.paymentType==='Due'?'text-amber-600':'text-emerald-600'}">${escapeHtml(tx.paymentType)}</td>
+                        <td class="p-3 text-slate-600">${escapeHtml(tx.staff)}</td>
+                        <td class="p-3 text-right font-bold text-slate-800">৳ ${amt}</td>
                         <td class="p-3 text-center">
-                            <button onclick="promptDeleteTransaction(${tx.id})" class="text-red-500 hover:text-red-700 p-1.5 rounded-lg transition" title="মুছে ফেলুন">
+                            <button onclick="promptDeleteTransaction('${tx.id}')" class="text-red-500 hover:text-red-700 p-1.5 rounded-lg transition" title="মুছে ফেলুন">
                                 <i class="fa-solid fa-trash-can"></i>
                             </button>
                         </td>
                     </tr>
                 `;
+            });
+
+            // Also include advance transfers in reports if within date range
+            advanceTransfers.forEach(t => {
+                if(t.date >= startDate && t.date <= endDate) {
+                    tableHTML += `
+                        <tr class="hover:bg-slate-50 transition border-b border-slate-50 bg-teal-50/30">
+                            <td class="p-3 font-medium text-slate-600">${escapeHtml(t.date)} <span class="text-xs text-slate-400 block">${escapeHtml(t.time)}</span></td>
+                            <td class="p-3"><span class="bg-teal-100 text-teal-800 px-2.5 py-1 rounded-full text-xs font-semibold">অগ্রিম ট্রান্সফার</span></td>
+                            <td class="p-3 text-slate-700">${escapeHtml(t.details)}</td>
+                            <td class="p-3 text-slate-600">${escapeHtml(t.custName)}<span class="text-xs text-slate-400 block">${escapeHtml(t.custPhone)}</span></td>
+                            <td class="p-3 font-semibold text-xs text-teal-600">Transferred</td>
+                            <td class="p-3 text-slate-600">-</td>
+                            <td class="p-3 text-right font-bold text-teal-700">৳ ${t.amount}</td>
+                            <td class="p-3 text-center">-</td>
+                        </tr>
+                    `;
+                }
             });
 
             if (tableHTML === '') {
@@ -1463,13 +2177,12 @@
         }
 
         function resetFilters() {
-            const todayStr = new Date().toISOString().split('T')[0];
+            const todayStr = getLocalDateString();
             document.getElementById('filterStartDate').value = todayStr;
             document.getElementById('filterEndDate').value = todayStr;
             filterReports();
         }
 
-        // Password Protected Deletion & Clearing Data
         function promptDeleteTransaction(id) {
             pendingAction = 'delete_single';
             pendingParam = id;
@@ -1497,7 +2210,7 @@
             const enteredPass = document.getElementById('passwordInput').value;
             if (enteredPass === 'rat23747214') {
                 if (pendingAction === 'delete_single') {
-                    transactions = transactions.filter(tx => tx.id !== pendingParam);
+                    transactions = transactions.filter(tx => String(tx.id) !== String(pendingParam));
                     syncToGoogleSheet();
                     refreshDashboard();
                     filterReports();
@@ -1506,11 +2219,14 @@
                     alert('সফলভাবে এন্ট্রি মুছে ফেলা হয়েছে!');
                 } else if (pendingAction === 'clear_all') {
                     transactions = [];
+                    advancePayments = [];
+                    advanceTransfers = [];
                     syncToGoogleSheet();
                     refreshDashboard();
                     filterReports();
                     populateDueCustomers();
                     refreshExpenseTable();
+                    refreshAdvancePayUI();
                     alert('সকল ডাটা সফলভাবে মুছে ফেলা হয়েছে!');
                 }
                 closePasswordModal();
@@ -1519,26 +2235,26 @@
             }
         }
 
-        // Export to CSV
+        // Export to CSV with Advance Data included
         function exportToCSV() {
             let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
             csvContent += "ID,Date,Time,Category,Details,Customer Name,Customer Phone,Payment Type,Staff,Amount,Print Pages,Photocopy Pages,Damaged Pages\n";
 
             transactions.forEach(tx => {
                 let row = [
-                    tx.id,
-                    tx.date,
-                    tx.time,
-                    `"${tx.category}"`,
-                    `"${tx.details}"`,
-                    `"${tx.custName}"`,
-                    `"${tx.custPhone}"`,
-                    `"${tx.paymentType}"`,
-                    `"${tx.staff}"`,
-                    tx.amount,
-                    tx.printPages || 0,
-                    tx.photocopyPages || 0,
-                    tx.damagedPages || 0
+                    csvEscape(tx.id),
+                    csvEscape(tx.date),
+                    csvEscape(tx.time),
+                    csvEscape(tx.category),
+                    csvEscape(tx.details),
+                    csvEscape(tx.custName),
+                    csvEscape(tx.custPhone),
+                    csvEscape(tx.paymentType),
+                    csvEscape(tx.staff),
+                    Number(tx.amount) || 0,
+                    Number(tx.printPages) || 0,
+                    Number(tx.photocopyPages) || 0,
+                    Number(tx.damagedPages) || 0
                 ];
                 csvContent += row.join(",") + "\n";
             });
@@ -1546,18 +2262,23 @@
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `Rajshahi_Air_Travels_Report_${new Date().toISOString().split('T')[0]}.csv`);
+            link.setAttribute("download", `Rajshahi_Air_Travels_Report_${getLocalDateString()}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
         }
 
-        // Backup & Restore
+        // Backup & Restore with Advance data support
         function performBackup() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(transactions));
+            const backupObj = {
+                transactions: transactions,
+                advancePayments: advancePayments,
+                advanceTransfers: advanceTransfers
+            };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupObj, null, 2));
             const downloadAnchor = document.createElement('a');
             downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", `rajshahi_air_backup_${new Date().toISOString().split('T')[0]}.json`);
+            downloadAnchor.setAttribute("download", `rajshahi_air_backup_${getLocalDateString()}.json`);
             document.body.appendChild(downloadAnchor);
             downloadAnchor.click();
             downloadAnchor.remove();
@@ -1571,20 +2292,34 @@
                 return;
             }
 
+            if(!confirm('রিস্টোর করলে বর্তমান সব ডেটা ব্যাকআপ ডেটা দ্বারা প্রতিস্থাপিত হবে। আপনি কি নিশ্চিত?')) return;
+
             try {
                 const parsedData = JSON.parse(inputVal);
                 if (Array.isArray(parsedData)) {
-                    transactions = parsedData;
-                    syncToGoogleSheet();
-                    refreshDashboard();
-                    filterReports();
-                    populateDueCustomers();
-                    refreshExpenseTable();
-                    alert('সফলভাবে ডাটা রিস্টোর করা হয়েছে!');
-                    document.getElementById('restoreInput').value = '';
+                    // Old format backup containing only transactions array
+                    transactions = normalizeTransactions(parsedData);
+                    advancePayments = [];
+                    advanceTransfers = [];
+                } else if (parsedData && typeof parsedData === 'object') {
+                    // New comprehensive format
+                    transactions = normalizeTransactions(parsedData.transactions || []);
+                    advancePayments = normalizeAdvances(parsedData.advancePayments || []);
+                    advanceTransfers = normalizeTransfers(parsedData.advanceTransfers || []);
                 } else {
                     alert('সঠিক ব্যাকআপ ডাটা ফরম্যাট পাওয়া যায়নি।');
+                    return;
                 }
+
+                saveToLocalStorageQuiet();
+                syncToGoogleSheet();
+                refreshDashboard();
+                filterReports();
+                populateDueCustomers();
+                refreshExpenseTable();
+                refreshAdvancePayUI();
+                alert('সফলভাবে ডাটা রিস্টোর করা হয়েছে!');
+                document.getElementById('restoreInput').value = '';
             } catch (e) {
                 alert('রিস্টোর করতে সমস্যা হয়েছে। সঠিক JSON কোড দিন।');
             }
