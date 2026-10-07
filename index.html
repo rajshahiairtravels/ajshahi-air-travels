@@ -1567,7 +1567,7 @@
         }
 
         // ================= ADVANCE PAY FEATURE LOGIC =================
-        function handleAdvancePaySubmit(event) {
+        async function handleAdvancePaySubmit(event) {
             event.preventDefault();
             const staff = document.getElementById('globalStaff').value;
             const dateStr = getLocalDateString();
@@ -1601,6 +1601,8 @@
 
             advancePayments.unshift(advObj);
             saveToLocalStorageQuiet();
+            // Persist the new Advance Pay entry to Supabase before leaving the page.
+            await syncToGoogleSheet();
             refreshAdvancePayUI();
             refreshDashboard();
             document.getElementById('formAdvancePay').reset();
@@ -1748,7 +1750,7 @@
             document.getElementById('transferModal').classList.add('hidden');
         }
 
-        function submitMainBalanceTransfer() {
+        async function submitMainBalanceTransfer() {
             if(!selectedAdvanceCustPhone) return;
             let amount = parseFloat(document.getElementById('transferAmountInput').value);
             let details = getCustomerAdvanceDetails(selectedAdvanceCustPhone);
@@ -1785,6 +1787,8 @@
 
             advanceTransfers.unshift(transObj);
             saveToLocalStorageQuiet();
+            // Persist the transfer to Supabase before leaving the page.
+            await syncToGoogleSheet();
             refreshAdvancePayUI();
             refreshDashboard();
             closeTransferModal();
