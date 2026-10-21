@@ -59,28 +59,27 @@
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
+            <p class="text-sm text-slate-600">আপনার Supabase অ্যাকাউন্টের ইমেইল দিন। পাসওয়ার্ড রিসেটের লিংক ইমেইলে পাঠানো হবে। এখানে কোনো গোপন রিকভারি কোড রাখা নেই।</p>
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">রিকভারি কোড বা নম্বর দিন</label>
-                <input type="text" id="recoveryCodeInput" class="w-full border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="কোড লিখুন...">
-            </div>
-            <div id="recoveryResultBox" class="hidden bg-slate-50 p-4 rounded-lg border space-y-2 text-sm">
-                <p><strong>ইমেইল:</strong> <span id="recEmail" class="text-blue-700"></span></p>
-                <p><strong>পাসওয়ার্ড:</strong> <span id="recPass" class="text-red-600 font-bold"></span></p>
-                <button onclick="triggerRocketMessage()" class="w-full mt-2 bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg text-xs font-medium transition">
-                    রিকভারি অপশন (Rocket Check)
-                </button>
-            </div>
-            <div id="rocketMsgBox" class="hidden text-xs font-bold text-purple-700 bg-purple-50 p-3 rounded-lg text-center">
-                Type abubokor rocket no.
+                <label for="recoveryEmail" class="block text-sm font-medium text-slate-700 mb-1">অ্যাকাউন্টের ইমেইল</label>
+                <input type="email" id="recoveryEmail" required class="w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="আপনার লগইন ইমেইল">
             </div>
             <div class="flex space-x-3 pt-2">
-                <button onclick="verifyRecoveryCode()" class="flex-grow bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg transition shadow-sm">
-                    যাচাই করুন
-                </button>
-                <button onclick="closeRecoveryModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2.5 rounded-lg font-medium transition">
-                    বন্ধ করুন
-                </button>
+                <button onclick="sendPasswordReset()" class="flex-grow bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg transition shadow-sm">রিসেট লিংক পাঠান</button>
+                <button onclick="closeRecoveryModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2.5 rounded-lg font-medium transition">বন্ধ করুন</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Password update modal shown after following a valid Supabase recovery link -->
+    <div id="newPasswordModal" class="fixed inset-0 bg-slate-900 bg-opacity-70 z-[60] flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4">
+            <h3 class="text-lg font-bold text-blue-900">নতুন পাসওয়ার্ড সেট করুন</h3>
+            <label for="newPasswordInput" class="block text-sm font-medium text-slate-700">নতুন পাসওয়ার্ড (কমপক্ষে ৮ অক্ষর)</label>
+            <input id="newPasswordInput" type="password" minlength="8" autocomplete="new-password" class="w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="নতুন পাসওয়ার্ড" />
+            <label for="confirmNewPasswordInput" class="block text-sm font-medium text-slate-700">আবার লিখুন</label>
+            <input id="confirmNewPasswordInput" type="password" minlength="8" autocomplete="new-password" class="w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="পাসওয়ার্ড নিশ্চিত করুন" />
+            <button onclick="completePasswordReset()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg">পাসওয়ার্ড আপডেট করুন</button>
         </div>
     </div>
 
@@ -750,12 +749,16 @@
                     <!-- Detailed Summary Cards Inside Report -->
                     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 pt-4 border-t">
                         <div class="bg-blue-50 p-3 rounded-xl border border-blue-100 text-center">
-                            <p class="text-xs text-blue-600 font-medium">মোট আয় (Cash)</p>
+                            <p class="text-xs text-blue-600 font-medium">নগদ বিক্রি (বাকি আদায় বাদে)</p>
                             <h4 id="repTotalIncome" class="text-lg font-bold text-blue-800">৳ ০</h4>
                         </div>
                         <div class="bg-amber-50 p-3 rounded-xl border border-amber-100 text-center">
-                            <p class="text-xs text-amber-600 font-medium">মোট বকেয়া</p>
+                            <p class="text-xs text-amber-600 font-medium">নতুন বাকি বিক্রি</p>
                             <h4 id="repTotalDue" class="text-lg font-bold text-amber-800">৳ ০</h4>
+                        </div>
+                        <div class="bg-teal-50 p-3 rounded-xl border border-teal-100 text-center">
+                            <p class="text-xs text-teal-600 font-medium">বাকি আদায়</p>
+                            <h4 id="repDueCollected" class="text-lg font-bold text-teal-800">৳ ০</h4>
                         </div>
                         <div class="bg-red-50 p-3 rounded-xl border border-red-100 text-center">
                             <p class="text-xs text-red-600 font-medium">মোট খরচ</p>
@@ -989,7 +992,6 @@
         const SUPABASE_URL = 'https://qzedvbkurzwdmnuhadne.supabase.co';
         const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_UFjNSgJQTcfgaFX6oviivw_SOaKbkSj';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby-JHUENUU09IVsXgzCGRKGY0dH58CFVnjji89TVC-NIjI0CmrcdInOShQBFIWvKHBipw/exec";
         
         let transactions = [];
         let advancePayments = [];
@@ -1044,7 +1046,7 @@
                 localStorage.setItem('rajshahi_air_transactions', JSON.stringify(transactions));
                 localStorage.setItem('rajshahi_air_advance_payments', JSON.stringify(advancePayments));
                 localStorage.setItem('rajshahi_air_advance_transfers', JSON.stringify(advanceTransfers));
-                updateSyncStatus('Synced', 'bg-emerald-600 text-white');
+                updateSyncStatus('Local saved', 'bg-amber-600 text-white');
             } catch (error) {
                 console.error('LocalStorage quota or save error:', error);
                 alert('লোকাল স্টোরেজ ফুল বা ত্রুটিপূর্ণ! ডেটা ব্রাউজারে সেভ হতে সমস্যা হচ্ছে।');
@@ -1222,19 +1224,49 @@
             initializeAppContent();
         }
 
-        function syncToGoogleSheet() {
+        // Supabase sync. replaceRemote=true is used only for an explicit restore operation.
+        function syncToGoogleSheet(options = {}) {
+            const replaceRemote = options.replaceRemote === true;
             saveToLocalStorageQuiet();
             updateSyncStatus('Syncing...', 'bg-blue-800 text-blue-200');
-            const txSnapshot=transactions.map(tx=>({...tx}));
-            const advSnapshot=advancePayments.map(a=>({...a}));
-            const trSnapshot=advanceTransfers.map(t=>({...t}));
-            syncQueue = syncQueue.then(async()=>{
-                try{
-                    if(txSnapshot.length) { const {error}=await supabaseClient.from('transactions').upsert(txSnapshot.map(txToDb),{onConflict:'id'}); if(error) throw error; }
-                    if(advSnapshot.length) { const {error}=await supabaseClient.from('advance_payments').upsert(advSnapshot.map(advToDb),{onConflict:'id'}); if(error) throw error; }
-                    if(trSnapshot.length) { const {error}=await supabaseClient.from('advance_transfers').upsert(trSnapshot.map(trToDb),{onConflict:'id'}); if(error) throw error; }
+            const txSnapshot = transactions.map(tx => ({...tx}));
+            const advSnapshot = advancePayments.map(a => ({...a}));
+            const trSnapshot = advanceTransfers.map(t => ({...t}));
+            syncQueue = syncQueue.then(async () => {
+                try {
+                    const tables = [
+                        {name:'transactions', rows:txSnapshot, map:txToDb},
+                        {name:'advance_payments', rows:advSnapshot, map:advToDb},
+                        {name:'advance_transfers', rows:trSnapshot, map:trToDb}
+                    ];
+                    for (const table of tables) {
+                        if (table.rows.length) {
+                            const {error} = await supabaseClient.from(table.name).upsert(table.rows.map(table.map), {onConflict:'id'});
+                            if (error) throw error;
+                        }
+                    }
+                    // Only explicit restore removes remote rows absent from the backup.
+                    // Upserts finish first so a failed upload cannot wipe existing records.
+                    if (replaceRemote) {
+                        for (const table of tables) {
+                            const {data:remoteRows, error} = await supabaseClient.from(table.name).select('id');
+                            if (error) throw error;
+                            const keepIds = new Set(table.rows.map(row => String(row.id)));
+                            for (const row of (remoteRows || [])) {
+                                if (!keepIds.has(String(row.id))) {
+                                    const {error:deleteError} = await supabaseClient.from(table.name).delete().eq('id', row.id);
+                                    if (deleteError) throw deleteError;
+                                }
+                            }
+                        }
+                    }
                     updateSyncStatus('Online • Synced','bg-emerald-600 text-white');
-                }catch(e){ console.error('Supabase sync failed:',e); updateSyncStatus('Sync Failed','bg-red-600 text-white'); }
+                    return true;
+                } catch (e) {
+                    console.error('Supabase sync failed:', e);
+                    updateSyncStatus('Sync Failed • Local saved','bg-red-600 text-white');
+                    return false;
+                }
             });
             return syncQueue;
         }
@@ -1248,9 +1280,17 @@
             if(Array.isArray(remaining) && remaining.length) throw new Error('ডাটাবেস থেকে এন্ট্রি মুছে ফেলা যায়নি।');
         }
         async function clearRemoteData(){
+            // Verify each deletion. PostgREST may return no error when RLS silently filters rows.
             for(const table of ['advance_transfers','advance_payments','transactions']){
+                const {error:readError}=await supabaseClient.from(table).select('id').limit(1);
+                if(readError) throw readError;
                 const {error}=await supabaseClient.from(table).delete().neq('id','__never__');
                 if(error) throw error;
+                const {data:remaining,error:verifyError}=await supabaseClient.from(table).select('id').limit(1);
+                if(verifyError) throw verifyError;
+                if(Array.isArray(remaining) && remaining.length){
+                    throw new Error('টেবিল '+table+'-এর সব রেকর্ড মুছেছে কি না যাচাই করা যায়নি।');
+                }
             }
         }
 
@@ -1287,9 +1327,7 @@
         }
 
         function openRecoveryModal() {
-            document.getElementById('recoveryCodeInput').value = '';
-            document.getElementById('recoveryResultBox').classList.add('hidden');
-            document.getElementById('rocketMsgBox').classList.add('hidden');
+            document.getElementById('recoveryEmail').value = document.getElementById('loginEmail').value.trim();
             document.getElementById('recoveryModal').classList.remove('hidden');
         }
 
@@ -1297,20 +1335,36 @@
             document.getElementById('recoveryModal').classList.add('hidden');
         }
 
-        function verifyRecoveryCode() {
-            const code = document.getElementById('recoveryCodeInput').value.trim();
-            if (code === '017718100090') {
-                document.getElementById('recEmail').innerText = 'rattraining5@gmail.com';
-                document.getElementById('recPass').innerText = 'Rat@9293';
-                document.getElementById('recoveryResultBox').classList.remove('hidden');
-            } else {
-                alert('ভুল রিকভারি কোড বা নম্বর!');
-            }
+        async function sendPasswordReset() {
+            const email = document.getElementById('recoveryEmail').value.trim();
+            if (!email) { alert('আপনার লগইন ইমেইল লিখুন।'); return; }
+            const redirectTo = window.location.origin + window.location.pathname;
+            const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo });
+            if (error) { alert('রিসেট ইমেইল পাঠানো যায়নি। Supabase Auth-এর URL Configuration এবং SMTP সেটিংস যাচাই করুন।'); console.error('Password reset request failed:', error); return; }
+            closeRecoveryModal();
+            alert('যদি এই ইমেইলের অ্যাকাউন্ট থাকে, পাসওয়ার্ড রিসেটের নির্দেশনা পাঠানো হয়েছে। ইমেইলের লিংক খুলে নতুন পাসওয়ার্ড দিন।');
         }
 
-        function triggerRocketMessage() {
-            document.getElementById('rocketMsgBox').classList.remove('hidden');
+        async function completePasswordReset() {
+            const password = document.getElementById('newPasswordInput').value;
+            const confirmation = document.getElementById('confirmNewPasswordInput').value;
+            if (password.length < 8) { alert('পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে।'); return; }
+            if (password !== confirmation) { alert('দুটি পাসওয়ার্ড মেলেনি।'); return; }
+            const { error } = await supabaseClient.auth.updateUser({ password });
+            if (error) { alert('পাসওয়ার্ড আপডেট করা যায়নি। রিসেট ইমেইলের নতুন লিংক ব্যবহার করুন।'); console.error('Password update failed:', error); return; }
+            document.getElementById('newPasswordModal').classList.add('hidden');
+            document.getElementById('newPasswordInput').value = '';
+            document.getElementById('confirmNewPasswordInput').value = '';
+            alert('নতুন পাসওয়ার্ড সেট হয়েছে। এখন নতুন পাসওয়ার্ড দিয়ে লগইন করতে পারবেন।');
+            await supabaseClient.auth.signOut();
+            checkLoginState();
         }
+
+        supabaseClient.auth.onAuthStateChange((event) => {
+            if (event === 'PASSWORD_RECOVERY') {
+                document.getElementById('newPasswordModal').classList.remove('hidden');
+            }
+        });
 
         function initializeAppContent() {
             updateCurrentDate();
@@ -1393,7 +1447,7 @@
         }
 
         // General Transactions Handler
-        function handleTransaction(event, type) {
+        async function handleTransaction(event, type) {
             event.preventDefault();
             const staff = document.getElementById('globalStaff').value;
             const dateStr = getLocalDateString();
@@ -1487,7 +1541,7 @@
             };
 
             transactions.unshift(transactionObj);
-            syncToGoogleSheet();
+            const synced = await syncToGoogleSheet();
             refreshDashboard();
             filterReports();
             populateDueCustomers();
@@ -1508,11 +1562,11 @@
             }
             else if (type === 'banking') document.getElementById('formBanking').reset();
 
-            alert('সফলভাবে এন্ট্রি সংরক্ষিত হয়েছে!');
+            alert(synced ? 'এন্ট্রি সংরক্ষিত ও অনলাইনে সিঙ্ক হয়েছে।' : 'এন্ট্রি এই ব্রাউজারে সংরক্ষিত হয়েছে, কিন্তু অনলাইন সিঙ্ক ব্যর্থ। ইন্টারনেট/ডাটাবেস যাচাই করে আবার সিঙ্ক করুন।');
         }
 
         // Expense Handler
-        function handleExpense(event) {
+        async function handleExpense(event) {
             event.preventDefault();
             const staff = document.getElementById('globalStaff').value;
             const dateStr = getLocalDateString();
@@ -1546,12 +1600,12 @@
             };
 
             transactions.unshift(expenseObj);
-            syncToGoogleSheet();
+            const synced = await syncToGoogleSheet();
             refreshDashboard();
             filterReports();
             refreshExpenseTable();
             document.getElementById('formExpense').reset();
-            alert('দোকানের খরচ সফলভাবে এন্ট্রি হয়েছে!');
+            alert(synced ? 'দোকানের খরচ সংরক্ষিত ও অনলাইনে সিঙ্ক হয়েছে।' : 'খরচ ব্রাউজারে সংরক্ষিত হয়েছে, কিন্তু অনলাইন সিঙ্ক ব্যর্থ। আবার সিঙ্ক করুন।');
         }
 
         function getCategoryName(type) {
@@ -1601,12 +1655,12 @@
 
             advancePayments.unshift(advObj);
             saveToLocalStorageQuiet();
-            // Persist the new Advance Pay entry to Supabase before leaving the page.
-            await syncToGoogleSheet();
+            // Persist the new Advance Pay entry to Supabase before reporting success.
+            const synced = await syncToGoogleSheet();
             refreshAdvancePayUI();
             refreshDashboard();
             document.getElementById('formAdvancePay').reset();
-            alert('গ্রাহকের অগ্রিম টাকা সফলভাবে জমা হয়েছে!');
+            alert(synced ? 'গ্রাহকের অগ্রিম সংরক্ষিত ও অনলাইনে সিঙ্ক হয়েছে।' : 'অগ্রিম ব্রাউজারে সংরক্ষিত হয়েছে, কিন্তু অনলাইন সিঙ্ক ব্যর্থ। আবার সিঙ্ক করুন।');
         }
 
         function getTotalAdvanceBalance() {
@@ -1788,15 +1842,15 @@
             advanceTransfers.unshift(transObj);
             saveToLocalStorageQuiet();
             // Persist the transfer to Supabase before leaving the page.
-            await syncToGoogleSheet();
+            const synced = await syncToGoogleSheet();
             refreshAdvancePayUI();
             refreshDashboard();
             closeTransferModal();
             openCustomerAdvanceDetail(selectedAdvanceCustPhone);
-            alert('সফলভাবে মূল ক্যাশে টাকা ট্রান্সফার করা হয়েছে!');
+            alert(synced ? 'মূল ক্যাশে টাকা ট্রান্সফার হয়েছে এবং অনলাইনে সিঙ্ক হয়েছে।' : 'ট্রান্সফার ব্রাউজারে সংরক্ষিত, কিন্তু অনলাইন সিঙ্ক ব্যর্থ। আবার সিঙ্ক করুন।');
         }
 
-        function deleteAdvanceRecord(advId) {
+        async function deleteAdvanceRecord(advId) {
             let adv = advancePayments.find(a => a.id === advId);
             if(!adv) return;
 
@@ -1808,14 +1862,27 @@
             }
 
             if(confirm('আপনি কি নিশ্চিতভাবে এই অগ্রিম এন্ট্রি মুছে ফেলতে চান?')) {
-                advancePayments = advancePayments.filter(a => a.id !== advId);
+                const previous = advancePayments;
+                advancePayments = advancePayments.filter(a => String(a.id) !== String(advId));
                 saveToLocalStorageQuiet();
-                refreshAdvancePayUI();
-                refreshDashboard();
-                if(selectedAdvanceCustPhone) {
-                    openCustomerAdvanceDetail(selectedAdvanceCustPhone);
+                try {
+                    const {error} = await supabaseClient.from('advance_payments').delete().eq('id', String(advId));
+                    if (error) throw error;
+                    const {data:stillThere, error:verifyError} = await supabaseClient.from('advance_payments').select('id').eq('id', String(advId)).limit(1);
+                    if (verifyError) throw verifyError;
+                    if (Array.isArray(stillThere) && stillThere.length) throw new Error('রেকর্ডটি ডাটাবেস থেকে মুছে ফেলা যায়নি।')
+                    refreshAdvancePayUI();
+                    refreshDashboard();
+                    if(selectedAdvanceCustPhone) openCustomerAdvanceDetail(selectedAdvanceCustPhone);
+                    alert('অগ্রিম এন্ট্রি মুছে ফেলা হয়েছে।');
+                } catch (e) {
+                    console.error('Advance delete failed:', e);
+                    advancePayments = previous;
+                    saveToLocalStorageQuiet();
+                    refreshAdvancePayUI();
+                    refreshDashboard();
+                    alert('অনলাইন থেকে অগ্রিম এন্ট্রি মুছতে ব্যর্থ। স্থানীয় ডেটা আগের অবস্থায় ফেরানো হয়েছে।');
                 }
-                alert('সফলভাবে অগ্রিম এন্ট্রি ডিলিট করা হয়েছে!');
             }
         }
         // ================= END ADVANCE PAY FEATURE =================
@@ -1943,7 +2010,7 @@
             box.classList.remove('hidden');
         }
 
-        function submitDuePayment() {
+        async function submitDuePayment() {
             const phone = document.getElementById('dueCustomerSelect').value;
             const payAmount = parseFloat(document.getElementById('payDueAmount').value);
             const staff = document.getElementById('globalStaff').value;
@@ -1988,12 +2055,12 @@
             };
 
             transactions.unshift(dueCollectionObj);
-            syncToGoogleSheet();
+            const synced = await syncToGoogleSheet();
             refreshDashboard();
             filterReports();
             populateDueCustomers();
             document.getElementById('customerDueInfoBox').classList.add('hidden');
-            alert('বাকি টাকা সফলভাবে গ্রহণ করা হয়েছে!');
+            alert(synced ? 'বাকি টাকা গ্রহণ ও অনলাইনে সিঙ্ক হয়েছে।' : 'বাকি আদায় ব্রাউজারে সংরক্ষিত হয়েছে, কিন্তু অনলাইন সিঙ্ক ব্যর্থ। আবার সিঙ্ক করুন.');
         }
 
         // Dashboard & Report Refresh Functions (Accounting Rule compliant)
@@ -2138,6 +2205,7 @@
             
             let totalIncome = 0;
             let totalDue = 0;
+            let totalDueCollected = 0;
             let totalExpense = 0;
             let printPages = 0;
             let photocopyPages = 0;
@@ -2146,9 +2214,10 @@
 
             filtered.forEach(tx => {
                 const amt = Number(tx.amount) || 0;
-                if (tx.paymentType === 'Paid' && tx.category !== 'দোকানের খরচ') {
+                if (tx.paymentType === 'Paid' && tx.category !== 'দোকানের খরচ' && tx.category !== 'বাকি আদায়') {
                     totalIncome += amt;
                 }
+                if (tx.category === 'বাকি আদায়') totalDueCollected += amt;
                 if (tx.paymentType === 'Due' && tx.category !== 'দোকানের খরচ' && tx.category !== 'বাকি আদায়') {
                     totalDue += amt;
                 }
@@ -2202,6 +2271,7 @@
 
             document.getElementById('repTotalIncome').innerText = `৳ ${totalIncome}`;
             document.getElementById('repTotalDue').innerText = `৳ ${totalDue}`;
+            document.getElementById('repDueCollected').innerText = `৳ ${totalDueCollected}`;
             document.getElementById('repTotalExpense').innerText = `৳ ${totalExpense}`;
             document.getElementById('repPrintPages').innerText = `${printPages} পেজ`;
             document.getElementById('repPcPages').innerText = `${photocopyPages} পেজ`;
@@ -2259,6 +2329,8 @@
                     closePasswordModal();
                     alert('সফলভাবে এন্ট্রি মুছে ফেলা হয়েছে!');
                 }else if(pendingAction==='clear_all'){
+                    const confirmation = prompt('সতর্কতা: অনলাইনসহ সব রেকর্ড স্থায়ীভাবে মুছে যাবে। চালিয়ে যেতে ঠিক এই কথাটি লিখুন: DELETE ALL');
+                    if (confirmation !== 'DELETE ALL') { alert('ডাটা মুছার কাজ বাতিল করা হয়েছে।'); return; }
                     await syncQueue;
                     await clearRemoteData();
                     transactions=[]; advancePayments=[]; advanceTransfers=[];
@@ -2331,30 +2403,59 @@
 
             try {
                 const parsedData = JSON.parse(inputVal);
+                let nextTransactions, nextAdvances, nextTransfers;
                 if (Array.isArray(parsedData)) {
-                    // Old format backup containing only transactions array
-                    transactions = normalizeTransactions(parsedData);
-                    advancePayments = [];
-                    advanceTransfers = [];
-                } else if (parsedData && typeof parsedData === 'object') {
-                    // New comprehensive format
-                    transactions = normalizeTransactions(parsedData.transactions || []);
-                    advancePayments = normalizeAdvances(parsedData.advancePayments || []);
-                    advanceTransfers = normalizeTransfers(parsedData.advanceTransfers || []);
+                    // Legacy backup containing only the transactions array
+                    nextTransactions = normalizeTransactions(parsedData);
+                    nextAdvances = [];
+                    nextTransfers = [];
+                } else if (parsedData && typeof parsedData === 'object' &&
+                           Array.isArray(parsedData.transactions) &&
+                           Array.isArray(parsedData.advancePayments) &&
+                           Array.isArray(parsedData.advanceTransfers)) {
+                    nextTransactions = normalizeTransactions(parsedData.transactions);
+                    nextAdvances = normalizeAdvances(parsedData.advancePayments);
+                    nextTransfers = normalizeTransfers(parsedData.advanceTransfers);
                 } else {
-                    alert('সঠিক ব্যাকআপ ডাটা ফরম্যাট পাওয়া যায়নি।');
+                    alert('ব্যাকআপের ফরম্যাট ঠিক নয়। transactions, advancePayments এবং advanceTransfers—তিনটি array থাকতে হবে।');
                     return;
                 }
-
+                // Validate IDs and transfer references before changing any current data.
+                for (const [label, rows] of [['লেনদেন', nextTransactions], ['অগ্রিম', nextAdvances], ['ট্রান্সফার', nextTransfers]]) {
+                    const ids = rows.map(row => String(row.id ?? '').trim());
+                    if (ids.some(id => !id) || new Set(ids).size !== ids.length) {
+                        alert(label + ' তালিকায় ID ফাঁকা বা ডুপ্লিকেট আছে। বর্তমান ডাটা পরিবর্তন করা হয়নি।');
+                        return;
+                    }
+                }
+                const advanceIds = new Set(nextAdvances.map(row => String(row.id)));
+                if (nextTransfers.some(row => !advanceIds.has(String(row.advanceId)))) {
+                    alert('এক বা একাধিক অগ্রিম ট্রান্সফারের মূল অগ্রিম রেকর্ড পাওয়া যায়নি। রিস্টোর বাতিল করা হয়েছে।');
+                    return;
+                }
+                if (nextTransactions.some(row => !Number.isFinite(Number(row.amount)) || Number(row.amount) < 0) ||
+                    nextAdvances.some(row => !Number.isFinite(Number(row.amount)) || Number(row.amount) < 0) ||
+                    nextTransfers.some(row => !Number.isFinite(Number(row.amount)) || Number(row.amount) < 0)) {
+                    alert('ব্যাকআপে ভুল টাকার অঙ্ক আছে। বর্তমান ডাটা পরিবর্তন করা হয়নি।');
+                    return;
+                }
+                transactions = nextTransactions;
+                advancePayments = nextAdvances;
+                advanceTransfers = nextTransfers;
                 saveToLocalStorageQuiet();
-                syncToGoogleSheet();
-                refreshDashboard();
-                filterReports();
-                populateDueCustomers();
-                refreshExpenseTable();
-                refreshAdvancePayUI();
-                alert('সফলভাবে ডাটা রিস্টোর করা হয়েছে!');
-                document.getElementById('restoreInput').value = '';
+                syncToGoogleSheet({replaceRemote:true}).then(synced => {
+                    if (!synced) {
+                        alert('লোকাল ডেটা রিস্টোর হয়েছে, কিন্তু অনলাইন রিস্টোর সম্পূর্ণ হয়নি। Sync Status যাচাই করে আবার চেষ্টা করুন।');
+                        return;
+                    }
+                    refreshDashboard();
+                    filterReports();
+                    populateDueCustomers();
+                    refreshExpenseTable();
+                    refreshAdvancePayUI();
+                    alert('ডাটা রিস্টোর ও অনলাইন সিঙ্ক সম্পূর্ণ হয়েছে।');
+                    document.getElementById('restoreInput').value = '';
+                });
             } catch (e) {
                 alert('রিস্টোর করতে সমস্যা হয়েছে। সঠিক JSON কোড দিন।');
             }
